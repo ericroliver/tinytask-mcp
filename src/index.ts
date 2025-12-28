@@ -11,6 +11,7 @@ import { TaskService, CommentService, LinkService } from './services/index.js';
 import { createMcpServer } from './server/mcp-server.js';
 import { startStdioServer } from './server/stdio.js';
 import { startSseServer } from './server/sse.js';
+import { logger } from './utils/index.js';
 
 /**
  * Main entry point for TinyTask MCP Server
@@ -22,18 +23,20 @@ async function main() {
     const dbPath = process.env.TINYTASK_DB_PATH || './data/tinytask.db';
     const port = parseInt(process.env.TINYTASK_PORT || '3000', 10);
     const host = process.env.TINYTASK_HOST || '0.0.0.0';
+    const logLevel = process.env.TINYTASK_LOG_LEVEL || 'info';
 
     // Print startup banner
-    console.error('='.repeat(50));
-    console.error('TinyTask MCP Server');
-    console.error('='.repeat(50));
-    console.error('Mode:', mode);
-    console.error('Database:', dbPath);
+    logger.info('='.repeat(50));
+    logger.info('TinyTask MCP Server');
+    logger.info('='.repeat(50));
+    logger.info(`Mode: ${mode}`);
+    logger.info(`Database: ${dbPath}`);
+    logger.info(`Log Level: ${logLevel}`);
     if (mode === 'sse' || mode === 'both') {
-      console.error('Host:', host);
-      console.error('Port:', port);
+      logger.info(`Host: ${host}`);
+      logger.info(`Port: ${port}`);
     }
-    console.error('='.repeat(50));
+    logger.info('='.repeat(50));
 
     // Validate mode
     if (!['stdio', 'sse', 'both'].includes(mode)) {

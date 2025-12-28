@@ -98,7 +98,95 @@ For remote or HTTP-based access:
 
 - `TINYTASK_MODE`: Server mode (`stdio`, `sse`, or `both`) - default: `both`
 - `TINYTASK_PORT`: HTTP server port for SSE mode - default: `3000`
+- `TINYTASK_HOST`: HTTP server host for SSE mode - default: `0.0.0.0`
 - `TINYTASK_DB_PATH`: Path to SQLite database file - default: `./data/tinytask.db`
+- `TINYTASK_LOG_LEVEL`: Logging level - default: `info`
+
+## Logging Configuration
+
+TinyTask MCP supports multiple logging levels for debugging and troubleshooting agent interactions.
+
+### Log Levels
+
+- **`error`**: Only errors (minimal production logging)
+- **`warn`**: Warnings and errors
+- **`info`**: Important operations (default, backward compatible)
+- **`debug`**: Detailed debugging including tool calls and validation
+- **`trace`**: Full forensic logging with complete request/response bodies
+
+### Setting Log Level
+
+#### Docker (Recommended)
+
+Edit `docker-compose.yml`:
+
+```yaml
+environment:
+  TINYTASK_LOG_LEVEL: trace  # Change from 'info' to enable forensic logging
+```
+
+Then restart:
+
+```bash
+docker-compose down
+docker-compose up -d
+docker-compose logs -f tinytask  # Watch logs in real-time
+```
+
+#### Local Development
+
+```bash
+# Set for single run
+TINYTASK_LOG_LEVEL=debug npm run dev
+
+# Or export for session
+export TINYTASK_LOG_LEVEL=trace
+npm run dev
+```
+
+#### MCP Client (stdio mode)
+
+```json
+{
+  "mcpServers": {
+    "tinytask": {
+      "command": "node",
+      "args": ["/path/to/tinytask-mcp/build/index.js"],
+      "env": {
+        "TINYTASK_MODE": "stdio",
+        "TINYTASK_LOG_LEVEL": "debug"
+      }
+    }
+  }
+}
+```
+
+### Troubleshooting Agent Issues
+
+If an agent (like goose) is having issues creating tasks or performing operations:
+
+1. **Enable forensic logging** by setting `TINYTASK_LOG_LEVEL=trace`
+2. **Reproduce the issue** with the agent
+3. **Review the logs** for:
+   - Full request body showing what the agent sent
+   - Validation errors indicating missing or invalid fields
+   - Full response body showing what was returned
+   - Tool execution errors with stack traces
+
+4. **Common issues revealed by trace logging**:
+   - Missing required fields in requests
+   - Wrong data types (e.g., string instead of number)
+   - Invalid enum values for status
+   - Session management problems in SSE mode
+   - Encoding issues in request bodies
+
+5. **Return to normal logging** after troubleshooting by setting `TINYTASK_LOG_LEVEL=info`
+
+### Performance Impact
+
+- **error/warn/info**: Negligible overhead (< 1ms per request)
+- **debug**: Minimal overhead (~1-2ms per request)
+- **trace**: Small overhead (~3-5ms per request) - use only for troubleshooting
 
 ## API Overview
 

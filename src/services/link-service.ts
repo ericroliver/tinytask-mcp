@@ -12,32 +12,35 @@ export class LinkService {
    * Create a new link
    */
   create(params: CreateLinkParams): Link {
-    // Validate required fields
-    if (!params.url || params.url.trim().length === 0) {
-      throw new Error('Link URL is required');
-    }
+    // Use a transaction to ensure atomic execution and immediate lock release
+    return this.db.transaction(() => {
+      // Validate required fields
+      if (!params.url || params.url.trim().length === 0) {
+        throw new Error('Link URL is required');
+      }
 
-    // Verify task exists
-    const task = this.db.queryOne('SELECT id FROM tasks WHERE id = ?', [params.task_id]);
-    if (!task) {
-      throw new Error(`Task not found: ${params.task_id}`);
-    }
+      // Verify task exists
+      const task = this.db.queryOne('SELECT id FROM tasks WHERE id = ?', [params.task_id]);
+      if (!task) {
+        throw new Error(`Task not found: ${params.task_id}`);
+      }
 
-    const result = this.db.execute(
-      `INSERT INTO links (task_id, url, description, created_by)
-       VALUES (?, ?, ?, ?)`,
-      [params.task_id, params.url.trim(), params.description || null, params.created_by || null]
-    );
+      const result = this.db.execute(
+        `INSERT INTO links (task_id, url, description, created_by)
+         VALUES (?, ?, ?, ?)`,
+        [params.task_id, params.url.trim(), params.description || null, params.created_by || null]
+      );
 
-    const link = this.db.queryOne<Link>('SELECT * FROM links WHERE id = ?', [
-      result.lastInsertRowid,
-    ]);
+      const link = this.db.queryOne<Link>('SELECT * FROM links WHERE id = ?', [
+        result.lastInsertRowid,
+      ]);
 
-    if (!link) {
-      throw new Error('Failed to retrieve created link');
-    }
+      if (!link) {
+        throw new Error('Failed to retrieve created link');
+      }
 
-    return link;
+      return link;
+    });
   }
 
   /**
@@ -51,44 +54,47 @@ export class LinkService {
    * Update link fields
    */
   update(id: number, updates: UpdateLinkParams): Link {
-    // Check if link exists
-    const existing = this.get(id);
-    if (!existing) {
-      throw new Error(`Link not found: ${id}`);
-    }
-
-    // Build update query dynamically
-    const fields: string[] = [];
-    const values: unknown[] = [];
-
-    if (updates.url !== undefined) {
-      if (!updates.url || updates.url.trim().length === 0) {
-        throw new Error('Link URL cannot be empty');
+    // Use a transaction to ensure atomic execution and immediate lock release
+    return this.db.transaction(() => {
+      // Check if link exists
+      const existing = this.get(id);
+      if (!existing) {
+        throw new Error(`Link not found: ${id}`);
       }
-      fields.push('url = ?');
-      values.push(updates.url.trim());
-    }
 
-    if (updates.description !== undefined) {
-      fields.push('description = ?');
-      values.push(updates.description || null);
-    }
+      // Build update query dynamically
+      const fields: string[] = [];
+      const values: unknown[] = [];
 
-    if (fields.length === 0) {
-      // No actual changes
-      return existing;
-    }
+      if (updates.url !== undefined) {
+        if (!updates.url || updates.url.trim().length === 0) {
+          throw new Error('Link URL cannot be empty');
+        }
+        fields.push('url = ?');
+        values.push(updates.url.trim());
+      }
 
-    values.push(id);
+      if (updates.description !== undefined) {
+        fields.push('description = ?');
+        values.push(updates.description || null);
+      }
 
-    this.db.execute(`UPDATE links SET ${fields.join(', ')} WHERE id = ?`, values);
+      if (fields.length === 0) {
+        // No actual changes
+        return existing;
+      }
 
-    const updated = this.get(id);
-    if (!updated) {
-      throw new Error('Failed to retrieve updated link');
-    }
+      values.push(id);
 
-    return updated;
+      this.db.execute(`UPDATE links SET ${fields.join(', ')} WHERE id = ?`, values);
+
+      const updated = this.get(id);
+      if (!updated) {
+        throw new Error('Failed to retrieve updated link');
+      }
+
+      return updated;
+    });
   }
 
   /**

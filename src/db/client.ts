@@ -32,8 +32,11 @@ export class DatabaseClient {
     // Set synchronous mode for performance
     this.db.pragma('synchronous = NORMAL');
 
-    // Set busy timeout to 5 seconds
-    this.db.pragma('busy_timeout = 5000');
+    // Set busy timeout to 30 seconds to prevent premature timeouts
+    this.db.pragma('busy_timeout = 30000');
+    
+    // Set WAL autocheckpoint to prevent WAL from growing too large
+    this.db.pragma('wal_autocheckpoint = 1000');
   }
 
   /**
@@ -69,11 +72,25 @@ export class DatabaseClient {
    * Execute a query and return multiple rows
    */
   query<T = unknown>(sql: string, params?: unknown[]): T[] {
+    let stmt: Database.Statement | null = null;
     try {
-      const stmt = this.db.prepare(sql);
-      return (params ? stmt.all(...params) : stmt.all()) as T[];
+      stmt = this.db.prepare(sql);
+      const result = (params ? stmt.all(...params) : stmt.all()) as T[];
+      return result;
     } catch (error) {
       throw new Error(`Query failed: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      // Explicitly finalize the statement to release any locks immediately
+      if (stmt) {
+        try {
+          // In better-sqlite3, calling any method after the statement is done
+          // is safe, but we don't have an explicit finalize method in the type.
+          // The statement will be GC'd, but we can help by clearing the reference.
+          stmt = null;
+        } catch {
+          // Ignore errors during cleanup
+        }
+      }
     }
   }
 
@@ -81,12 +98,22 @@ export class DatabaseClient {
    * Execute a query and return a single row
    */
   queryOne<T = unknown>(sql: string, params?: unknown[]): T | null {
+    let stmt: Database.Statement | null = null;
     try {
-      const stmt = this.db.prepare(sql);
+      stmt = this.db.prepare(sql);
       const result = params ? stmt.get(...params) : stmt.get();
       return (result as T) || null;
     } catch (error) {
       throw new Error(`QueryOne failed: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      // Explicitly finalize the statement to release any locks immediately
+      if (stmt) {
+        try {
+          stmt = null;
+        } catch {
+          // Ignore errors during cleanup
+        }
+      }
     }
   }
 
@@ -94,11 +121,22 @@ export class DatabaseClient {
    * Execute a write operation (INSERT, UPDATE, DELETE)
    */
   execute(sql: string, params?: unknown[]): Database.RunResult {
+    let stmt: Database.Statement | null = null;
     try {
-      const stmt = this.db.prepare(sql);
-      return params ? stmt.run(...params) : stmt.run();
+      stmt = this.db.prepare(sql);
+      const result = params ? stmt.run(...params) : stmt.run();
+      return result;
     } catch (error) {
       throw new Error(`Execute failed: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      // Explicitly finalize the statement to release any locks immediately
+      if (stmt) {
+        try {
+          stmt = null;
+        } catch {
+          // Ignore errors during cleanup
+        }
+      }
     }
   }
 

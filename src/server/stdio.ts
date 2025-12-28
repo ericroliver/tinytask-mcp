@@ -5,6 +5,7 @@
 
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { logger } from '../utils/index.js';
 
 /**
  * Start the MCP server with stdio transport
@@ -17,14 +18,14 @@ export async function startStdioServer(server: Server): Promise<void> {
   await server.connect(transport);
 
   // Log to stderr (stdout is reserved for MCP protocol)
-  console.error('TinyTask MCP server running on stdio');
-  console.error('Database:', process.env.TINYTASK_DB_PATH || './data/tinytask.db');
-  console.error('Mode: stdio');
-  console.error('Press Ctrl+C to stop');
+  logger.info('TinyTask MCP server running on stdio');
+  logger.info(`Database: ${process.env.TINYTASK_DB_PATH || './data/tinytask.db'}`);
+  logger.info('Mode: stdio');
+  logger.info('Press Ctrl+C to stop');
 
   // Handle shutdown
   const shutdown = async () => {
-    console.error('\nShutting down...');
+    logger.info('Shutting down...');
     await server.close();
     process.exit(0);
   };
