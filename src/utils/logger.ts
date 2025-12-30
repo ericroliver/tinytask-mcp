@@ -46,7 +46,7 @@ export class Logger {
     }
   }
 
-  shouldLog(level: LogLevel): boolean {
+  public shouldLog(level: LogLevel): boolean {
     return level <= this.level;
   }
 
@@ -79,19 +79,19 @@ export class Logger {
 
   info(message: string, context?: unknown): void {
     if (this.shouldLog(LogLevel.INFO)) {
-      console.error(this.formatMessage('INFO', message, context));
+      console.log(this.formatMessage('INFO', message, context));
     }
   }
 
   debug(message: string, context?: unknown): void {
     if (this.shouldLog(LogLevel.DEBUG)) {
-      console.error(this.formatMessage('DEBUG', message, context));
+      console.debug(this.formatMessage('DEBUG', message, context));
     }
   }
 
   trace(message: string, context?: unknown): void {
     if (this.shouldLog(LogLevel.TRACE)) {
-      console.error(this.formatMessage('TRACE', message, context));
+      console.debug(this.formatMessage('TRACE', message, context));
     }
   }
 

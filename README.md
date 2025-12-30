@@ -24,6 +24,8 @@ A minimal task management system designed for LLM agent collaboration, exposed a
 
 The easiest way to run TinyTask MCP is using Docker:
 
+> **Note**: Docker Compose v2+ is required. The `version` field has been removed from `docker-compose.yml` for v2+ compatibility. If you're using Docker Compose v1.x, please upgrade to v2.0 or later.
+
 ```bash
 # Start the server
 docker-compose up -d
