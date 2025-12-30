@@ -16,6 +16,8 @@ import {
   archiveTaskHandler,
   listTasksHandler,
   getMyQueueHandler,
+  signupForTaskHandler,
+  moveTaskHandler,
 } from './task-tools.js';
 import {
   addCommentHandler,
@@ -37,6 +39,8 @@ import type {
   ArchiveTaskParams,
   ListTasksParams,
   GetMyQueueParams,
+  SignupForTaskParams,
+  MoveTaskParams,
   AddCommentParams,
   UpdateCommentParams,
   DeleteCommentParams,
@@ -115,6 +119,12 @@ export function registerToolHandlers(
           break;
         case 'get_my_queue':
           result = await getMyQueueHandler(taskService, validatedArgs as GetMyQueueParams);
+          break;
+        case 'signup_for_task':
+          result = await signupForTaskHandler(taskService, validatedArgs as SignupForTaskParams);
+          break;
+        case 'move_task':
+          result = await moveTaskHandler(taskService, validatedArgs as MoveTaskParams);
           break;
 
         // Comment tools

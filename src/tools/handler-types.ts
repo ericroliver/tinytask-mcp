@@ -46,6 +46,17 @@ export interface GetMyQueueParams {
   agent_name: string;
 }
 
+export interface SignupForTaskParams {
+  agent_name: string;
+}
+
+export interface MoveTaskParams {
+  task_id: number;
+  current_agent: string;
+  new_agent: string;
+  comment: string;
+}
+
 // Comment handler parameter types
 export interface AddCommentParams {
   task_id: number;

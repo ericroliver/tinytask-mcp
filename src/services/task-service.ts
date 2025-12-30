@@ -259,6 +259,97 @@ export class TaskService {
   }
 
   /**
+   * Sign up for the highest priority idle task in agent's queue
+   * Atomically marks the task as 'working' and returns it
+   */
+  signupForTask(agentName: string): TaskWithRelations | null {
+    return this.db.transaction(() => {
+      // Get first idle task from agent's queue
+      const task = this.db.queryOne<Task>(
+        `SELECT * FROM tasks
+         WHERE assigned_to = ?
+           AND status = 'idle'
+           AND archived_at IS NULL
+         ORDER BY priority DESC, created_at ASC
+         LIMIT 1`,
+        [agentName]
+      );
+
+      if (!task) {
+        return null;
+      }
+
+      // Update task to working status
+      this.db.execute(
+        'UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        ['working', task.id]
+      );
+
+      // Return task with relations
+      const updatedTask = this.get(task.id, true);
+      if (!updatedTask) {
+        throw new Error('Failed to retrieve updated task');
+      }
+
+      return updatedTask;
+    });
+  }
+
+  /**
+   * Transfer task from current agent to new agent
+   * Atomically updates assignment, status, and adds handoff comment
+   */
+  moveTask(
+    taskId: number,
+    currentAgent: string,
+    newAgent: string,
+    comment: string
+  ): TaskWithRelations {
+    return this.db.transaction(() => {
+      // Verify task and ownership
+      const task = this.db.queryOne<Task>('SELECT * FROM tasks WHERE id = ?', [taskId]);
+      
+      if (!task) {
+        throw new Error(`Task not found: ${taskId}`);
+      }
+
+      if (task.assigned_to !== currentAgent) {
+        throw new Error(
+          `Task ${taskId} is not assigned to ${currentAgent} (currently assigned to: ${task.assigned_to || 'no one'})`
+        );
+      }
+
+      if (task.status === 'complete') {
+        throw new Error(
+          `Task ${taskId} is complete and cannot be transferred`
+        );
+      }
+
+      // Update task assignment and status
+      this.db.execute(
+        `UPDATE tasks
+         SET assigned_to = ?, status = 'idle', updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [newAgent, taskId]
+      );
+
+      // Add handoff comment
+      this.db.execute(
+        'INSERT INTO comments (task_id, content, created_by) VALUES (?, ?, ?)',
+        [taskId, comment.trim(), currentAgent]
+      );
+
+      // Return updated task with relations
+      const updatedTask = this.get(taskId, true);
+      if (!updatedTask) {
+        throw new Error('Failed to retrieve updated task');
+      }
+
+      return updatedTask;
+    });
+  }
+
+  /**
    * Validate status value
    */
   private isValidStatus(status: string): status is TaskStatus {

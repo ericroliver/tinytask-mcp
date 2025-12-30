@@ -53,6 +53,17 @@ export const toolSchemas = {
     agent_name: z.string().describe('Agent name'),
   }),
 
+  signup_for_task: z.object({
+    agent_name: z.string().describe('Agent name signing up for task'),
+  }),
+
+  move_task: z.object({
+    task_id: z.number().describe('Task ID to transfer'),
+    current_agent: z.string().describe('Current agent (for verification)'),
+    new_agent: z.string().describe('Agent to transfer to'),
+    comment: z.string().describe('Handoff message/context'),
+  }),
+
   // Comment tools
   add_comment: z.object({
     task_id: z.number().describe('Task ID'),
@@ -195,6 +206,16 @@ export const toolDefinitions = [
     name: 'get_my_queue',
     description: 'Get all open tasks assigned to a specific agent',
     inputSchema: zodToJsonSchema(toolSchemas.get_my_queue),
+  },
+  {
+    name: 'signup_for_task',
+    description: 'Claim the highest priority idle task from your queue and mark it as working',
+    inputSchema: zodToJsonSchema(toolSchemas.signup_for_task),
+  },
+  {
+    name: 'move_task',
+    description: 'Transfer a task to another agent with status reset to idle and add handoff comment',
+    inputSchema: zodToJsonSchema(toolSchemas.move_task),
   },
 
   // Comment tools

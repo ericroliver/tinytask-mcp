@@ -202,6 +202,10 @@ TinyTask MCP exposes the following tools for LLM agents:
 - `archive_task` - Archive a completed task
 - `list_tasks` - List all tasks
 - `get_my_queue` - Get tasks assigned to a specific agent
+- **`signup_for_task`** ⚡ - Claim highest priority idle task and mark as working (atomic)
+- **`move_task`** ⚡ - Transfer task to another agent with handoff comment (atomic)
+
+**⚡ High-Efficiency Tools**: These tools combine multiple operations into single atomic transactions, reducing token consumption by 40-60% for common workflows.
 
 #### Comment Tools
 - `add_comment` - Add a comment to a task
@@ -243,7 +247,7 @@ For detailed architecture documentation, see [Architecture Documentation](docs/t
 
 ## Example Workflows
 
-### Feature Development Workflow
+### Feature Development Workflow (Using High-Efficiency Tools)
 
 1. **Product Agent** creates a feature request:
 ```typescript
@@ -256,43 +260,61 @@ create_task({
 })
 ```
 
-2. **Architect Agent** designs the solution:
+2. **Architect Agent** claims and works on task:
 ```typescript
-// Check queue
-get_my_queue({ agent_name: "architect-agent" })
-
-// Start working
-update_task({ id: 1, status: "working" })
+// 🚀 NEW: Claim task in one operation (was 3 tool calls)
+const task = signup_for_task({ agent_name: "architect-agent" })
+// Task is now marked as 'working' and includes all comments/links
 
 // Add design document
 add_link({
-  task_id: 1,
+  task_id: task.id,
   url: "/docs/dark-mode-design.md",
   description: "Architecture design"
 })
 
-// Reassign to developer
-update_task({
-  id: 1,
-  assigned_to: "code-agent",
-  status: "idle"
+// 🚀 NEW: Transfer to developer with handoff comment (was 3 tool calls)
+move_task({
+  task_id: task.id,
+  current_agent: "architect-agent",
+  new_agent: "code-agent",
+  comment: "Architecture complete. Design doc attached. Ready for implementation."
 })
 ```
 
-3. **Code Agent** implements:
+3. **Code Agent** claims and implements:
 ```typescript
-// Check queue
-get_my_queue({ agent_name: "code-agent" })
+// 🚀 NEW: Claim transferred task in one operation
+const task = signup_for_task({ agent_name: "code-agent" })
+// Automatically gets highest priority idle task with handoff comment
 
 // Implement and complete
-update_task({ id: 1, status: "working" })
-add_comment({ task_id: 1, content: "Implementation complete" })
-update_task({ id: 1, status: "complete" })
+add_comment({ task_id: task.id, content: "Implementation complete" })
+update_task({ id: task.id, status: "complete" })
 ```
 
 4. **Integration Agent** archives:
 ```typescript
-archive_task({ id: 1 })
+archive_task({ id: task.id })
+```
+
+**Token Savings**: This workflow uses 2 fewer tool calls per agent handoff, saving ~40-60% tokens on task management operations.
+
+### Traditional Workflow (Still Supported)
+
+For specialized scenarios, all individual tools remain available:
+
+```typescript
+// Check queue manually
+const queue = get_my_queue({ agent_name: "architect-agent" })
+const task = queue.tasks[0]
+
+// Update status manually
+update_task({ id: task.id, status: "working" })
+
+// Transfer manually
+update_task({ id: task.id, assigned_to: "code-agent", status: "idle" })
+add_comment({ task_id: task.id, content: "Handoff message" })
 ```
 
 For more examples, see [Example Workflows](docs/examples/workflows.md)
