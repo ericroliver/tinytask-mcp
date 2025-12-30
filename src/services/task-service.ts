@@ -319,9 +319,9 @@ export class TaskService {
         );
       }
 
-      if (task.status === 'complete') {
+      if (task.status !== 'idle' && task.status !== 'working') {
         throw new Error(
-          `Task ${taskId} is complete and cannot be transferred`
+          `Task ${taskId} with status '${task.status}' cannot be transferred (only 'idle' or 'working' are allowed)`
         );
       }
 

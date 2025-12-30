@@ -85,7 +85,7 @@ export async function startSseServer(server: Server, options?: SseServerOptions)
   app.post('/mcp', async (req, res) => {
     const startTime = Date.now();
     
-    logger.info('MCP POST message received');
+    logger.info(`MCP POST message received`);
     
     // The session ID should be in the request (check query params, headers, or body)
     // MCP SDK typically uses query parameters

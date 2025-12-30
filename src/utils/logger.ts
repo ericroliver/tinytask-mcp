@@ -79,7 +79,7 @@ export class Logger {
 
   info(message: string, context?: unknown): void {
     if (this.shouldLog(LogLevel.INFO)) {
-      console.log(this.formatMessage('INFO', message, context));
+      console.error(this.formatMessage('INFO', message, context));
     }
   }
 

@@ -25,7 +25,7 @@ services:
       # Logging
       # Options: error, warn, info (default), debug, trace
       # Use 'trace' for forensic debugging, 'info' for production
-      TINYTASK_LOG_LEVEL: trace
+      TINYTASK_LOG_LEVEL: info
       
       # Node environment
       NODE_ENV: production
