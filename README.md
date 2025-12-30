@@ -24,6 +24,8 @@ A minimal task management system designed for LLM agent collaboration, exposed a
 
 The easiest way to run TinyTask MCP is using Docker:
 
+> **Note**: Docker Compose v2+ is required. The `version` field has been removed from `docker-compose.yml` for v2+ compatibility. If you're using Docker Compose v1.x, please upgrade to v2.0 or later.
+
 ```bash
 # Start the server
 docker-compose up -d
@@ -98,7 +100,95 @@ For remote or HTTP-based access:
 
 - `TINYTASK_MODE`: Server mode (`stdio`, `sse`, or `both`) - default: `both`
 - `TINYTASK_PORT`: HTTP server port for SSE mode - default: `3000`
+- `TINYTASK_HOST`: HTTP server host for SSE mode - default: `0.0.0.0`
 - `TINYTASK_DB_PATH`: Path to SQLite database file - default: `./data/tinytask.db`
+- `TINYTASK_LOG_LEVEL`: Logging level - default: `info`
+
+## Logging Configuration
+
+TinyTask MCP supports multiple logging levels for debugging and troubleshooting agent interactions.
+
+### Log Levels
+
+- **`error`**: Only errors (minimal production logging)
+- **`warn`**: Warnings and errors
+- **`info`**: Important operations (default, backward compatible)
+- **`debug`**: Detailed debugging including tool calls and validation
+- **`trace`**: Full forensic logging with complete request/response bodies
+
+### Setting Log Level
+
+#### Docker (Recommended)
+
+Edit `docker-compose.yml`:
+
+```yaml
+environment:
+  TINYTASK_LOG_LEVEL: trace  # Change from 'info' to enable forensic logging
+```
+
+Then restart:
+
+```bash
+docker-compose down
+docker-compose up -d
+docker-compose logs -f tinytask  # Watch logs in real-time
+```
+
+#### Local Development
+
+```bash
+# Set for single run
+TINYTASK_LOG_LEVEL=debug npm run dev
+
+# Or export for session
+export TINYTASK_LOG_LEVEL=trace
+npm run dev
+```
+
+#### MCP Client (stdio mode)
+
+```json
+{
+  "mcpServers": {
+    "tinytask": {
+      "command": "node",
+      "args": ["/path/to/tinytask-mcp/build/index.js"],
+      "env": {
+        "TINYTASK_MODE": "stdio",
+        "TINYTASK_LOG_LEVEL": "debug"
+      }
+    }
+  }
+}
+```
+
+### Troubleshooting Agent Issues
+
+If an agent (like goose) is having issues creating tasks or performing operations:
+
+1. **Enable forensic logging** by setting `TINYTASK_LOG_LEVEL=trace`
+2. **Reproduce the issue** with the agent
+3. **Review the logs** for:
+   - Full request body showing what the agent sent
+   - Validation errors indicating missing or invalid fields
+   - Full response body showing what was returned
+   - Tool execution errors with stack traces
+
+4. **Common issues revealed by trace logging**:
+   - Missing required fields in requests
+   - Wrong data types (e.g., string instead of number)
+   - Invalid enum values for status
+   - Session management problems in SSE mode
+   - Encoding issues in request bodies
+
+5. **Return to normal logging** after troubleshooting by setting `TINYTASK_LOG_LEVEL=info`
+
+### Performance Impact
+
+- **error/warn/info**: Negligible overhead (< 1ms per request)
+- **debug**: Minimal overhead (~1-2ms per request)
+- **trace**: Small overhead (~3-5ms per request) - use only for troubleshooting
 
 ## API Overview
 
@@ -114,6 +204,10 @@ TinyTask MCP exposes the following tools for LLM agents:
 - `archive_task` - Archive a completed task
 - `list_tasks` - List all tasks
 - `get_my_queue` - Get tasks assigned to a specific agent
+- **`signup_for_task`** ⚡ - Claim highest priority idle task and mark as working (atomic)
+- **`move_task`** ⚡ - Transfer task to another agent with handoff comment (atomic)
+
+**⚡ High-Efficiency Tools**: These tools combine multiple operations into single atomic transactions, reducing token consumption by 40-60% for common workflows.
 
 #### Comment Tools
 - `add_comment` - Add a comment to a task
@@ -155,7 +249,7 @@ For detailed architecture documentation, see [Architecture Documentation](docs/t
 
 ## Example Workflows
 
-### Feature Development Workflow
+### Feature Development Workflow (Using High-Efficiency Tools)
 
 1. **Product Agent** creates a feature request:
 ```typescript
@@ -168,43 +262,61 @@ create_task({
 })
 ```
 
-2. **Architect Agent** designs the solution:
+2. **Architect Agent** claims and works on task:
 ```typescript
-// Check queue
-get_my_queue({ agent_name: "architect-agent" })
-
-// Start working
-update_task({ id: 1, status: "working" })
+// 🚀 NEW: Claim task in one operation (was 3 tool calls)
+const task = signup_for_task({ agent_name: "architect-agent" })
+// Task is now marked as 'working' and includes all comments/links
 
 // Add design document
 add_link({
-  task_id: 1,
+  task_id: task.id,
   url: "/docs/dark-mode-design.md",
   description: "Architecture design"
 })
 
-// Reassign to developer
-update_task({
-  id: 1,
-  assigned_to: "code-agent",
-  status: "idle"
+// 🚀 NEW: Transfer to developer with handoff comment (was 3 tool calls)
+move_task({
+  task_id: task.id,
+  current_agent: "architect-agent",
+  new_agent: "code-agent",
+  comment: "Architecture complete. Design doc attached. Ready for implementation."
 })
 ```
 
-3. **Code Agent** implements:
+3. **Code Agent** claims and implements:
 ```typescript
-// Check queue
-get_my_queue({ agent_name: "code-agent" })
+// 🚀 NEW: Claim transferred task in one operation
+const task = signup_for_task({ agent_name: "code-agent" })
+// Automatically gets highest priority idle task with handoff comment
 
 // Implement and complete
-update_task({ id: 1, status: "working" })
-add_comment({ task_id: 1, content: "Implementation complete" })
-update_task({ id: 1, status: "complete" })
+add_comment({ task_id: task.id, content: "Implementation complete" })
+update_task({ id: task.id, status: "complete" })
 ```
 
 4. **Integration Agent** archives:
 ```typescript
-archive_task({ id: 1 })
+archive_task({ id: task.id })
+```
+
+**Token Savings**: This workflow uses 2 fewer tool calls per agent handoff, saving ~40-60% tokens on task management operations.
+
+### Traditional Workflow (Still Supported)
+
+For specialized scenarios, all individual tools remain available:
+
+```typescript
+// Check queue manually
+const queue = get_my_queue({ agent_name: "architect-agent" })
+const task = queue.tasks[0]
+
+// Update status manually
+update_task({ id: task.id, status: "working" })
+
+// Transfer manually
+update_task({ id: task.id, assigned_to: "code-agent", status: "idle" })
+add_comment({ task_id: task.id, content: "Handoff message" })
 ```
 
 For more examples, see [Example Workflows](docs/examples/workflows.md)

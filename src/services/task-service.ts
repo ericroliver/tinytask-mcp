@@ -22,44 +22,47 @@ export class TaskService {
    * Create a new task
    */
   create(params: CreateTaskParams): ParsedTask {
-    // Validate required fields
-    if (!params.title || params.title.trim().length === 0) {
-      throw new Error('Task title is required');
-    }
+    // Use a transaction to ensure atomic execution and immediate lock release
+    return this.db.transaction(() => {
+      // Validate required fields
+      if (!params.title || params.title.trim().length === 0) {
+        throw new Error('Task title is required');
+      }
 
-    // Validate status if provided
-    if (params.status && !this.isValidStatus(params.status)) {
-      throw new Error(`Invalid status: ${params.status}`);
-    }
+      // Validate status if provided
+      if (params.status && !this.isValidStatus(params.status)) {
+        throw new Error(`Invalid status: ${params.status}`);
+      }
 
-    // Prepare data
-    const status = params.status || 'idle';
-    const priority = params.priority ?? 0;
-    const tags = params.tags ? JSON.stringify(params.tags) : null;
+      // Prepare data
+      const status = params.status || 'idle';
+      const priority = params.priority ?? 0;
+      const tags = params.tags ? JSON.stringify(params.tags) : null;
 
-    const result = this.db.execute(
-      `INSERT INTO tasks (title, description, status, assigned_to, created_by, priority, tags)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        params.title.trim(),
-        params.description || null,
-        status,
-        params.assigned_to || null,
-        params.created_by || null,
-        priority,
-        tags,
-      ]
-    );
+      const result = this.db.execute(
+        `INSERT INTO tasks (title, description, status, assigned_to, created_by, priority, tags)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [
+          params.title.trim(),
+          params.description || null,
+          status,
+          params.assigned_to || null,
+          params.created_by || null,
+          priority,
+          tags,
+        ]
+      );
 
-    const task = this.db.queryOne<Task>('SELECT * FROM tasks WHERE id = ?', [
-      result.lastInsertRowid,
-    ]);
+      const task = this.db.queryOne<Task>('SELECT * FROM tasks WHERE id = ?', [
+        result.lastInsertRowid,
+      ]);
 
-    if (!task) {
-      throw new Error('Failed to retrieve created task');
-    }
+      if (!task) {
+        throw new Error('Failed to retrieve created task');
+      }
 
-    return this.parseTask(task);
+      return this.parseTask(task);
+    });
   }
 
   /**
@@ -99,72 +102,75 @@ export class TaskService {
    * Update task fields
    */
   update(id: number, updates: UpdateTaskParams): ParsedTask {
-    // Check if task exists
-    const existing = this.get(id);
-    if (!existing) {
-      throw new Error(`Task not found: ${id}`);
-    }
-
-    // Validate status if provided
-    if (updates.status && !this.isValidStatus(updates.status)) {
-      throw new Error(`Invalid status: ${updates.status}`);
-    }
-
-    // Build update query dynamically
-    const fields: string[] = [];
-    const values: unknown[] = [];
-
-    if (updates.title !== undefined) {
-      if (!updates.title || updates.title.trim().length === 0) {
-        throw new Error('Task title cannot be empty');
+    // Use a transaction to ensure atomic execution and immediate lock release
+    return this.db.transaction(() => {
+      // Check if task exists
+      const existing = this.get(id);
+      if (!existing) {
+        throw new Error(`Task not found: ${id}`);
       }
-      fields.push('title = ?');
-      values.push(updates.title.trim());
-    }
 
-    if (updates.description !== undefined) {
-      fields.push('description = ?');
-      values.push(updates.description || null);
-    }
+      // Validate status if provided
+      if (updates.status && !this.isValidStatus(updates.status)) {
+        throw new Error(`Invalid status: ${updates.status}`);
+      }
 
-    if (updates.status !== undefined) {
-      fields.push('status = ?');
-      values.push(updates.status);
-    }
+      // Build update query dynamically
+      const fields: string[] = [];
+      const values: unknown[] = [];
 
-    if (updates.assigned_to !== undefined) {
-      fields.push('assigned_to = ?');
-      values.push(updates.assigned_to || null);
-    }
+      if (updates.title !== undefined) {
+        if (!updates.title || updates.title.trim().length === 0) {
+          throw new Error('Task title cannot be empty');
+        }
+        fields.push('title = ?');
+        values.push(updates.title.trim());
+      }
 
-    if (updates.priority !== undefined) {
-      fields.push('priority = ?');
-      values.push(updates.priority);
-    }
+      if (updates.description !== undefined) {
+        fields.push('description = ?');
+        values.push(updates.description || null);
+      }
 
-    if (updates.tags !== undefined) {
-      fields.push('tags = ?');
-      values.push(JSON.stringify(updates.tags));
-    }
+      if (updates.status !== undefined) {
+        fields.push('status = ?');
+        values.push(updates.status);
+      }
 
-    // Always update updated_at
-    fields.push('updated_at = CURRENT_TIMESTAMP');
+      if (updates.assigned_to !== undefined) {
+        fields.push('assigned_to = ?');
+        values.push(updates.assigned_to || null);
+      }
 
-    if (fields.length === 1) {
-      // Only updated_at would be updated, no actual changes
-      return existing;
-    }
+      if (updates.priority !== undefined) {
+        fields.push('priority = ?');
+        values.push(updates.priority);
+      }
 
-    values.push(id);
+      if (updates.tags !== undefined) {
+        fields.push('tags = ?');
+        values.push(JSON.stringify(updates.tags));
+      }
 
-    this.db.execute(`UPDATE tasks SET ${fields.join(', ')} WHERE id = ?`, values);
+      // Always update updated_at
+      fields.push('updated_at = CURRENT_TIMESTAMP');
 
-    const updated = this.get(id);
-    if (!updated) {
-      throw new Error('Failed to retrieve updated task');
-    }
+      if (fields.length === 1) {
+        // Only updated_at would be updated, no actual changes
+        return existing;
+      }
 
-    return updated;
+      values.push(id);
+
+      this.db.execute(`UPDATE tasks SET ${fields.join(', ')} WHERE id = ?`, values);
+
+      const updated = this.get(id);
+      if (!updated) {
+        throw new Error('Failed to retrieve updated task');
+      }
+
+      return updated;
+    });
   }
 
   /**
@@ -234,19 +240,113 @@ export class TaskService {
    * Archive a task (soft delete)
    */
   archive(id: number): ParsedTask {
-    const existing = this.get(id);
-    if (!existing) {
-      throw new Error(`Task not found: ${id}`);
-    }
+    // Use a transaction to ensure atomic execution and immediate lock release
+    return this.db.transaction(() => {
+      const existing = this.get(id);
+      if (!existing) {
+        throw new Error(`Task not found: ${id}`);
+      }
 
-    this.db.execute('UPDATE tasks SET archived_at = CURRENT_TIMESTAMP WHERE id = ?', [id]);
+      this.db.execute('UPDATE tasks SET archived_at = CURRENT_TIMESTAMP WHERE id = ?', [id]);
 
-    const archived = this.get(id);
-    if (!archived) {
-      throw new Error('Failed to retrieve archived task');
-    }
+      const archived = this.get(id);
+      if (!archived) {
+        throw new Error('Failed to retrieve archived task');
+      }
 
-    return archived;
+      return archived;
+    });
+  }
+
+  /**
+   * Sign up for the highest priority idle task in agent's queue
+   * Atomically marks the task as 'working' and returns it
+   */
+  signupForTask(agentName: string): TaskWithRelations | null {
+    return this.db.transaction(() => {
+      // Get first idle task from agent's queue
+      const task = this.db.queryOne<Task>(
+        `SELECT * FROM tasks
+         WHERE assigned_to = ?
+           AND status = 'idle'
+           AND archived_at IS NULL
+         ORDER BY priority DESC, created_at ASC
+         LIMIT 1`,
+        [agentName]
+      );
+
+      if (!task) {
+        return null;
+      }
+
+      // Update task to working status
+      this.db.execute(
+        'UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
+        ['working', task.id]
+      );
+
+      // Return task with relations
+      const updatedTask = this.get(task.id, true);
+      if (!updatedTask) {
+        throw new Error('Failed to retrieve updated task');
+      }
+
+      return updatedTask;
+    });
+  }
+
+  /**
+   * Transfer task from current agent to new agent
+   * Atomically updates assignment, status, and adds handoff comment
+   */
+  moveTask(
+    taskId: number,
+    currentAgent: string,
+    newAgent: string,
+    comment: string
+  ): TaskWithRelations {
+    return this.db.transaction(() => {
+      // Verify task and ownership
+      const task = this.db.queryOne<Task>('SELECT * FROM tasks WHERE id = ?', [taskId]);
+      
+      if (!task) {
+        throw new Error(`Task not found: ${taskId}`);
+      }
+
+      if (task.assigned_to !== currentAgent) {
+        throw new Error(
+          `Task ${taskId} is not assigned to ${currentAgent} (currently assigned to: ${task.assigned_to || 'no one'})`
+        );
+      }
+
+      if (task.status !== 'idle' && task.status !== 'working') {
+        throw new Error(
+          `Task ${taskId} with status '${task.status}' cannot be transferred (only 'idle' or 'working' are allowed)`
+        );
+      }
+
+      // Update task assignment and status
+      this.db.execute(
+        `UPDATE tasks
+         SET assigned_to = ?, status = 'idle', updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?`,
+        [newAgent, taskId]
+      );
+
+      // Add handoff comment
+      this.db.execute(
+        'INSERT INTO comments (task_id, content, created_by) VALUES (?, ?, ?)',
+        [taskId, comment.trim(), currentAgent]
+      );
+
+      // Return updated task with relations
+      const updatedTask = this.get(taskId, true);
+      if (!updatedTask) {
+        throw new Error('Failed to retrieve updated task');
+      }
+
+      return updatedTask;
+    });
   }
 
   /**

@@ -6,6 +6,7 @@
 import express from 'express';
 import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
+import { logger, LogLevel } from '../utils/index.js';
 
 /**
  * Configuration options for SSE server
@@ -23,8 +24,18 @@ export async function startSseServer(server: Server, options?: SseServerOptions)
   const port = options?.port ?? parseInt(process.env.TINYTASK_PORT || '3000');
   const host = options?.host ?? process.env.TINYTASK_HOST ?? '0.0.0.0';
 
-  // Middleware
-  app.use(express.json());
+  // Store active transports by session ID
+  const transports = new Map<string, SSEServerTransport>();
+
+  // Middleware - but NOT for /mcp POST (it needs raw stream)
+  app.use((req, res, next) => {
+    if (req.path === '/mcp' && req.method === 'POST') {
+      // Skip body parsing for MCP POST - the SDK needs raw stream
+      next();
+    } else {
+      express.json()(req, res, next);
+    }
+  });
 
   // CORS support
   app.use((req, res, next) => {
@@ -48,17 +59,113 @@ export async function startSseServer(server: Server, options?: SseServerOptions)
     });
   });
 
-  // SSE endpoint for MCP protocol
+  // SSE endpoint for MCP protocol - GET establishes the SSE stream
   app.get('/mcp', async (req, res) => {
-    console.error('New SSE connection from', req.ip);
+    logger.info(`New SSE connection from ${req.ip}`);
 
     const transport = new SSEServerTransport('/mcp', res);
+    
+    // Store transport by its session ID (before connecting)
+    const sessionId = transport.sessionId;
+    transports.set(sessionId, transport);
+    logger.info(`SSE session established: ${sessionId}`);
+    logger.debug('Transport details', { sessionId, clientIp: req.ip });
+    
+    // Connect server to transport (this calls transport.start() automatically)
     await server.connect(transport);
 
     // Handle disconnect
     req.on('close', () => {
-      console.error('SSE connection closed from', req.ip);
+      logger.info(`SSE connection closed: ${sessionId}`);
+      transports.delete(sessionId);
     });
+  });
+
+  // SSE endpoint for MCP protocol - POST handles client messages
+  app.post('/mcp', async (req, res) => {
+    const startTime = Date.now();
+    
+    logger.info(`MCP POST message received`);
+    
+    // The session ID should be in the request (check query params, headers, or body)
+    // MCP SDK typically uses query parameters
+    const sessionId = (req.query.sessionId as string) || (req.headers['x-session-id'] as string);
+    
+    // Log request headers at TRACE level
+    if (logger.shouldLog(LogLevel.TRACE)) {
+      logger.trace('Request headers', {
+        headers: req.headers,
+        sessionId,
+        query: req.query,
+      });
+    }
+    
+    if (!sessionId) {
+      logger.warn('No session ID in POST request', {
+        query: req.query,
+        headers: req.headers,
+      });
+      res.status(400).json({ error: 'Missing session ID' });
+      return;
+    }
+    
+    const transport = transports.get(sessionId);
+    
+    if (!transport) {
+      logger.error(`No transport found for session: ${sessionId}`, {
+        availableSessions: Array.from(transports.keys()),
+      });
+      res.status(404).json({ error: 'Session not found' });
+      return;
+    }
+    
+    // Capture request body for logging at TRACE level (without consuming the stream)
+    if (logger.shouldLog(LogLevel.TRACE)) {
+      const chunks: Buffer[] = [];
+      const originalOn = req.on.bind(req);
+      
+      // Intercept data events to capture body
+      req.on = function (event: string, listener: (...args: unknown[]) => void) {
+        if (event === 'data') {
+          return originalOn('data', (chunk: Buffer) => {
+            chunks.push(chunk);
+            listener(chunk);
+          });
+        }
+        return originalOn(event, listener);
+      } as typeof req.on;
+      
+      // Log body when complete
+      req.once('end', () => {
+        try {
+          const body = Buffer.concat(chunks).toString('utf8');
+          logger.trace('Request body', { body: JSON.parse(body) });
+        } catch (e) {
+          logger.debug('Could not parse request body for logging');
+        }
+      });
+    }
+    
+    try {
+      // Handle the incoming message through the transport
+      await transport.handlePostMessage(req, res);
+      
+      const duration = Date.now() - startTime;
+      logger.debug(`Request processed successfully`, { duration: `${duration}ms` });
+      
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      logger.error('Error handling POST message', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        sessionId,
+        duration: `${duration}ms`,
+      });
+      
+      if (!res.headersSent) {
+        res.status(500).json({ error: 'Failed to process message' });
+      }
+    }
   });
 
   // 404 handler
@@ -69,33 +176,38 @@ export async function startSseServer(server: Server, options?: SseServerOptions)
   // Error handler
   app.use(
     (err: Error, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-      console.error('Server error:', err);
+      logger.error('Server error', {
+        error: err.message,
+        stack: err.stack,
+        path: req.path,
+        method: req.method,
+      });
       res.status(500).json({ error: 'Internal server error' });
     }
   );
 
   // Start server
   const httpServer = app.listen(port, host, () => {
-    console.error('TinyTask MCP server running on SSE');
-    console.error(`URL: http://${host}:${port}/mcp`);
-    console.error(`Health: http://${host}:${port}/health`);
-    console.error('Database:', process.env.TINYTASK_DB_PATH || './data/tinytask.db');
-    console.error('Mode: SSE');
-    console.error('Press Ctrl+C to stop');
+    logger.info('TinyTask MCP server running on SSE');
+    logger.info(`URL: http://${host}:${port}/mcp`);
+    logger.info(`Health: http://${host}:${port}/health`);
+    logger.info(`Database: ${process.env.TINYTASK_DB_PATH || './data/tinytask.db'}`);
+    logger.info('Mode: SSE');
+    logger.info('Press Ctrl+C to stop');
   });
 
   // Graceful shutdown
   const shutdown = async () => {
-    console.error('\nShutting down...');
+    logger.info('Shutting down...');
     httpServer.close(async () => {
-      console.error('Server closed');
+      logger.info('Server closed');
       await server.close();
       process.exit(0);
     });
 
     // Force close after 5 seconds
     setTimeout(() => {
-      console.error('Forced shutdown');
+      logger.warn('Forced shutdown after timeout');
       process.exit(1);
     }, 5000);
   };

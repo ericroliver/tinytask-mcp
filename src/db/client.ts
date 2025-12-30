@@ -32,8 +32,11 @@ export class DatabaseClient {
     // Set synchronous mode for performance
     this.db.pragma('synchronous = NORMAL');
 
-    // Set busy timeout to 5 seconds
-    this.db.pragma('busy_timeout = 5000');
+    // Set busy timeout to 30 seconds to prevent premature timeouts
+    this.db.pragma('busy_timeout = 30000');
+    
+    // Set WAL autocheckpoint to prevent WAL from growing too large
+    this.db.pragma('wal_autocheckpoint = 1000');
   }
 
   /**
@@ -71,7 +74,8 @@ export class DatabaseClient {
   query<T = unknown>(sql: string, params?: unknown[]): T[] {
     try {
       const stmt = this.db.prepare(sql);
-      return (params ? stmt.all(...params) : stmt.all()) as T[];
+      const result = (params ? stmt.all(...params) : stmt.all()) as T[];
+      return result;
     } catch (error) {
       throw new Error(`Query failed: ${error instanceof Error ? error.message : String(error)}`);
     }
@@ -96,7 +100,8 @@ export class DatabaseClient {
   execute(sql: string, params?: unknown[]): Database.RunResult {
     try {
       const stmt = this.db.prepare(sql);
-      return params ? stmt.run(...params) : stmt.run();
+      const result = params ? stmt.run(...params) : stmt.run();
+      return result;
     } catch (error) {
       throw new Error(`Execute failed: ${error instanceof Error ? error.message : String(error)}`);
     }

@@ -1,4 +1,3 @@
-version: '3.8'
 
 services:
   tinytask:
@@ -24,6 +23,8 @@ services:
       TINYTASK_DB_PATH: /data/tinytask.db
       
       # Logging
+      # Options: error, warn, info (default), debug, trace
+      # Use 'trace' for forensic debugging, 'info' for production
       TINYTASK_LOG_LEVEL: info
       
       # Node environment

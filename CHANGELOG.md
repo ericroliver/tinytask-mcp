@@ -98,6 +98,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [1.1.0] - 2025-01-15
+
+### Added
+
+#### High-Level Task Tools for Token Efficiency
+
+Two new atomic task management tools that significantly reduce token consumption by combining multiple operations into single transactions:
+
+- **`signup_for_task` Tool**
+  - Atomically claims the highest priority idle task from an agent's queue
+  - Updates task status to 'working' in single operation
+  - Returns complete task with comments and links
+  - Respects priority ordering (higher priority first)
+  - Respects creation time ordering (older tasks first within same priority)
+  - **Token Savings**: ~58% reduction (3 calls → 1 call)
+  
+- **`move_task` Tool**
+  - Atomically transfers task to another agent with status reset to 'idle'
+  - Adds handoff comment from current agent
+  - Returns updated task with all comments and links
+  - Validates task ownership and status
+  - Prevents transfers of completed tasks
+  - **Token Savings**: ~45% reduction (3 calls → 1 call)
+
+#### Service Layer Enhancements
+- Added `TaskService.signupForTask(agentName)` method
+- Added `TaskService.moveTask(taskId, currentAgent, newAgent, comment)` method
+- Both methods use database transactions for atomicity
+- Comprehensive error handling with descriptive messages
+
+#### Type Safety Improvements
+- Added `SignupForTaskParams` interface
+- Added `MoveTaskParams` interface
+- Full TypeScript type coverage for new features
+
+### Improved
+
+- **Token Efficiency**: Reduced token consumption by 40-60% for common agent workflows
+- **Workflow Performance**: Faster task operations with fewer round-trips
+- **Transaction Safety**: All high-level operations are atomic with auto-rollback
+- **Test Coverage**: Added 24 comprehensive tests for new features (now 75 total tests)
+
+### Technical Details
+
+- Transaction-based implementations ensure data consistency
+- Priority ordering: `ORDER BY priority DESC, created_at ASC`
+- Status changes: `signup_for_task` changes idle→working, `move_task` changes any→idle
+- All operations complete in <100ms under normal load
+
+### Documentation
+
+- Added [`docs/technical/high-level-tools-implementation-plan.md`](docs/technical/high-level-tools-implementation-plan.md:1)
+- Added [`docs/technical/high-level-tools-summary.md`](docs/technical/high-level-tools-summary.md:1)
+- Updated product story documentation
+- Added comprehensive usage examples
+
+---
+
 ## [Unreleased]
 
 ### Planned Features

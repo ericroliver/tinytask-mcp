@@ -1,0 +1,1 @@
+{"mcpServers":{"tinytask-mcp":{"url":"http://localhost:3000/mcp","disabled":false,"timeout":500,"type":"sse","alwaysAllow":["list_tasks"]},"tinytask":{"command":"node","args":["/Users/eo/code/tinytask-mcp/build/index.js"],"env":{"TINYTASK_MODE":"stdio","TINYTASK_DB_PATH":"/Users/eo/runtimes/tinytask/tinytask.db"},"alwaysAllow":["create_task","get_my_queue","list_tasks"]}}}

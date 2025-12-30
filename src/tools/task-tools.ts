@@ -228,3 +228,80 @@ export async function getMyQueueHandler(taskService: TaskService, params: { agen
     };
   }
 }
+
+export async function signupForTaskHandler(
+  taskService: TaskService,
+  params: { agent_name: string }
+) {
+  try {
+    const task = taskService.signupForTask(params.agent_name);
+    
+    if (!task) {
+      return {
+        content: [
+          {
+            type: 'text' as const,
+            text: `No idle tasks available in queue for agent: ${params.agent_name}`,
+          },
+        ],
+      };
+    }
+
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Task #${task.id} claimed and set to working status\n\n${JSON.stringify(task, null, 2)}`,
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Error signing up for task: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+export async function moveTaskHandler(
+  taskService: TaskService,
+  params: {
+    task_id: number;
+    current_agent: string;
+    new_agent: string;
+    comment: string;
+  }
+) {
+  try {
+    const task = taskService.moveTask(
+      params.task_id,
+      params.current_agent,
+      params.new_agent,
+      params.comment
+    );
+
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Task #${params.task_id} transferred from ${params.current_agent} to ${params.new_agent}\n\n${JSON.stringify(task, null, 2)}`,
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Error moving task: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+}
