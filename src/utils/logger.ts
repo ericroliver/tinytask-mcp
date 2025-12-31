@@ -50,6 +50,27 @@ export class Logger {
     return level <= this.level;
   }
 
+  public getLevel(): LogLevel {
+    return this.level;
+  }
+
+  public getLevelName(): string {
+    switch (this.level) {
+      case LogLevel.ERROR:
+        return 'error';
+      case LogLevel.WARN:
+        return 'warn';
+      case LogLevel.INFO:
+        return 'info';
+      case LogLevel.DEBUG:
+        return 'debug';
+      case LogLevel.TRACE:
+        return 'trace';
+      default:
+        return 'unknown';
+    }
+  }
+
   private formatMessage(level: string, message: string, context?: unknown): string {
     const timestamp = this.enableTimestamp ? `[${new Date().toISOString()}]` : '';
     const prefix = `${timestamp} ${level}:`;

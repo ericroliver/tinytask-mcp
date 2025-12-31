@@ -344,7 +344,7 @@ describe('High-Level Task Tools', () => {
           'agent-2',
           'Comment'
         );
-      }).toThrow(`Task ${task.id} is complete and cannot be transferred`);
+      }).toThrow(`Task ${task.id} with status 'complete' cannot be transferred (only 'idle' or 'working' are allowed)`);
     });
 
     test('should return task with all comments and links', () => {
@@ -562,7 +562,7 @@ describe('High-Level Task Tools', () => {
           'reviewer',
           'Should fail'
         );
-      }).toThrow('is complete and cannot be transferred');
+      }).toThrow(`Task ${task.id} with status 'complete' cannot be transferred (only 'idle' or 'working' are allowed)`);
     });
   });
 });

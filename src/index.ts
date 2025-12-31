@@ -23,7 +23,7 @@ async function main() {
     const dbPath = process.env.TINYTASK_DB_PATH || './data/tinytask.db';
     const port = parseInt(process.env.TINYTASK_PORT || '3000', 10);
     const host = process.env.TINYTASK_HOST || '0.0.0.0';
-    const logLevel = process.env.TINYTASK_LOG_LEVEL || 'info';
+    const logLevelEnv = process.env.TINYTASK_LOG_LEVEL || 'info';
 
     // Print startup banner
     logger.info('='.repeat(50));
@@ -31,12 +31,17 @@ async function main() {
     logger.info('='.repeat(50));
     logger.info(`Mode: ${mode}`);
     logger.info(`Database: ${dbPath}`);
-    logger.info(`Log Level: ${logLevel}`);
+    logger.info(`Log Level (env): ${logLevelEnv}`);
+    logger.info(`Log Level (actual): ${logger.getLevelName()}`);
     if (mode === 'sse' || mode === 'both') {
       logger.info(`Host: ${host}`);
       logger.info(`Port: ${port}`);
     }
     logger.info('='.repeat(50));
+
+    // Test trace logging
+    logger.trace('Trace logging is active - this message should only appear at TRACE level');
+    logger.debug('Debug logging is active - this message should appear at DEBUG and TRACE levels');
 
     // Validate mode
     if (!['stdio', 'sse', 'both'].includes(mode)) {
