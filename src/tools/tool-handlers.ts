@@ -169,8 +169,13 @@ export function registerToolHandlers(
       }
 
       const duration = Date.now() - startTime;
-      logger.debug(`Tool execution completed: ${name}`, { duration: `${duration}ms` });
-      logger.trace('Tool execution result', { name, result });
+      logger.info(`✅ TOOL EXECUTION COMPLETED: ${name}`, {
+        duration: `${duration}ms`,
+        resultType: result.isError ? 'error' : 'success',
+        contentCount: result.content?.length || 0,
+        timestamp: new Date().toISOString(),
+      });
+      logger.debug('Tool execution result details', { name, result });
 
       return result;
     } catch (error) {
