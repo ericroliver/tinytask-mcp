@@ -89,7 +89,7 @@ async function main() {
 
     if (mode === 'sse' || mode === 'both') {
       console.error('Starting SSE transport...');
-      await startSseServer(server, { port, host });
+      await startSseServer(taskService, commentService, linkService, { port, host });
       console.error('✓ SSE transport started');
     }
 
