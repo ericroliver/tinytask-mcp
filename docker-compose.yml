@@ -12,10 +12,18 @@ services:
       # Persistent database storage
       - ./data:/data
     environment:
-      # Server mode
-      TINYTASK_MODE: sse
+      # Transport mode: stdio, http, or both (default: both)
+      # Use 'http' for remote HTTP connections only
+      # Use 'both' for stdio + HTTP (recommended for flexibility)
+      TINYTASK_MODE: http
       
-      # SSE configuration
+      # HTTP Transport: Streamable HTTP by default
+      # Uncomment the following line to enable legacy SSE mode:
+      # TINYTASK_ENABLE_SSE: 'true'
+      # See docker-compose.legacy-sse.yml for a complete SSE example
+      # Migration guide: docs/product/streamable-http-migration-guide.md
+      
+      # HTTP server configuration
       TINYTASK_PORT: 3000
       TINYTASK_HOST: 0.0.0.0
       

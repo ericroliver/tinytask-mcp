@@ -1,10 +1,10 @@
 {
     "mcpServers": {
-        "tinytask-mcp": {
-            "url": "http://localhost:3000/mcp",
+        "tinytask": {
+            "url": "http://m3x.local:3000/mcp/",
             "disabled": false,
             "timeout": 500,
-            "type": "sse",
+            "type": "streamable-http",
             "alwaysAllow": [
                 "list_tasks"
             ]

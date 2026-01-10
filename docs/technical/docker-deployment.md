@@ -80,10 +80,11 @@ services:
       # Optional: Custom configuration
       - ./config:/config:ro
     environment:
-      # Server mode
-      TINYTASK_MODE: both  # Support both stdio and SSE
+      # Server mode / transport
+      TINYTASK_MODE: both  # Stdio + Streamable HTTP
+      TINYTASK_ENABLE_SSE: "false"  # Set true only for legacy SSE
       
-      # SSE configuration
+      # HTTP configuration
       TINYTASK_PORT: 3000
       TINYTASK_HOST: 0.0.0.0
       
@@ -131,6 +132,7 @@ services:
       - /app/node_modules  # Prevent overwriting
     environment:
       TINYTASK_MODE: both
+      TINYTASK_ENABLE_SSE: "false"
       TINYTASK_PORT: 3000
       TINYTASK_DB_PATH: /data/tinytask.db
       TINYTASK_LOG_LEVEL: debug

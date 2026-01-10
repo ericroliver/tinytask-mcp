@@ -15,7 +15,7 @@ A minimal task management system designed for LLM agent collaboration, exposed a
 - **Agent Queue Management**: Per-agent task queues with priority sorting
 - **Task Assignment & Routing**: Assign and reassign tasks between agents
 - **Persistent Storage**: SQLite database with full data persistence
-- **Dual Transport**: Supports both stdio (local) and SSE (HTTP) transports
+- **Flexible Transport**: Supports stdio (local), Streamable HTTP (default remote), and legacy SSE transports
 - **Docker Ready**: Containerized deployment with docker-compose
 
 ## Quick Start
@@ -48,18 +48,26 @@ npm install
 # Build the project
 npm run build
 
-# Run in SSE mode (HTTP server)
-npm run start:sse
+# Run Streamable HTTP (default HTTP transport)
+npm run start:http
 
-# Run in stdio mode (for MCP clients)
-npm run start:stdio
-
-# Run in both modes
+# Run Streamable HTTP with stdio sidecar
 npm run start:both
+
+# Legacy SSE (HTTP) transport
+npm run start:http:sse
+
+# Legacy SSE with stdio sidecar
+npm run start:both:sse
+
+# Direct stdio mode (no HTTP server)
+npm run start:stdio
 
 # Development mode with auto-reload
 npm run dev
 ```
+
+> **Need guidance on which option to pick?** See the [HTTP Transport Selection](#http-transport-selection) section and the dedicated [docs/product/streamable-http-migration-guide.md](docs/product/streamable-http-migration-guide.md).
 
 ## MCP Client Configuration
 
@@ -82,9 +90,9 @@ For local development with MCP clients like Claude Desktop:
 }
 ```
 
-### SSE Mode (Remote)
+### HTTP Mode (Streamable HTTP - Default)
 
-For remote or HTTP-based access:
+For HTTP-based access using the Streamable HTTP transport (recommended):
 
 ```json
 {
@@ -96,11 +104,30 @@ For remote or HTTP-based access:
 }
 ```
 
+### SSE Mode (Legacy)
+
+If you explicitly enable SSE via `TINYTASK_ENABLE_SSE=true`, the endpoint is the same, but you may want a different client profile to track the legacy transport:
+
+```json
+{
+  "mcpServers": {
+    "tinytask-sse": {
+      "url": "http://localhost:3000/mcp",
+      "headers": {
+        "X-Tinytask-Transport": "sse"
+      }
+    }
+  }
+}
+```
+> SSE continues to work for backward compatibility but will be removed in a future major release. Plan migrations with the [docs/product/streamable-http-migration-guide.md](docs/product/streamable-http-migration-guide.md).
+
 ## Environment Variables
 
-- `TINYTASK_MODE`: Server mode (`stdio`, `sse`, or `both`) - default: `both`
-- `TINYTASK_PORT`: HTTP server port for SSE mode - default: `3000`
-- `TINYTASK_HOST`: HTTP server host for SSE mode - default: `0.0.0.0`
+- `TINYTASK_MODE`: Server mode (`stdio`, `http`, or `both`) - default: `both`
+- `TINYTASK_ENABLE_SSE`: Force legacy SSE transport when `true` (default: `false`)
+- `TINYTASK_PORT`: HTTP server port - default: `3000`
+- `TINYTASK_HOST`: HTTP server host - default: `0.0.0.0`
 - `TINYTASK_DB_PATH`: Path to SQLite database file - default: `./data/tinytask.db`
 - `TINYTASK_LOG_LEVEL`: Logging level - default: `info`
 
@@ -236,11 +263,28 @@ TinyTask MCP provides the following resources:
 
 For detailed API documentation, see [API Documentation](docs/technical/mcp-api-design.md)
 
+## HTTP Transport Selection
+
+TinyTask now uses Streamable HTTP as the default HTTP transport. The legacy SSE transport can still be enabled via configuration for environments that rely on it.
+
+| Scenario | `TINYTASK_MODE` | `TINYTASK_ENABLE_SSE` | Result |
+| --- | --- | --- | --- |
+| Default HTTP deployment | `http` | _unset_ / `false` | Streamable HTTP (unified `/mcp` endpoint)
+| Mixed stdio + HTTP | `both` | _unset_ / `false` | stdio + Streamable HTTP
+| Legacy SSE (HTTP only) | `http` | `true` | SSE (deprecated)
+| Legacy SSE + stdio | `both` | `true` | stdio + SSE
+
+When `TINYTASK_MODE=stdio`, no HTTP transport is started regardless of `TINYTASK_ENABLE_SSE`.
+
+The routing logic lives in [src/server/http.ts](src/server/http.ts:1). It delegates to the Streamable HTTP implementation in [src/server/streamable-http.ts](src/server/streamable-http.ts:1) by default and falls back to the SSE implementation in [src/server/sse.ts](src/server/sse.ts:1) when the legacy flag is enabled.
+
+Refer to the [docs/product/streamable-http-migration-guide.md](docs/product/streamable-http-migration-guide.md) for detailed migration steps and troubleshooting tips.
+
 ## Architecture
 
 TinyTask MCP follows a layered architecture:
 
-1. **Transport Layer**: Handles stdio and SSE communication
+1. **Transport Layer**: Handles stdio, Streamable HTTP, and SSE communication
 2. **MCP Server Layer**: Implements MCP protocol (tools & resources)
 3. **Service Layer**: Business logic for tasks, comments, and links
 4. **Database Layer**: SQLite with Better-SQLite3
@@ -358,11 +402,11 @@ npm run clean
 
 ## Deployment
 
-See [Deployment Guide](docs/deployment.md) for production deployment instructions.
+See [Deployment Guide](docs/deployment.md) for production deployment instructions, including Streamable HTTP vs SSE configuration details.
 
 ## Troubleshooting
 
-See [Troubleshooting Guide](docs/troubleshooting.md) for common issues and solutions.
+See [Troubleshooting Guide](docs/troubleshooting.md) for common issues and transport troubleshooting steps.
 
 ## Technical Documentation
 

@@ -1,6 +1,8 @@
 version: '3.8'
 
 services:
+  # Primary development service using Streamable HTTP (default transport)
+  # This is the recommended transport for new development and testing
   tinytask-dev:
     build:
       context: .
@@ -14,7 +16,8 @@ services:
       - ./data:/data
       - /app/node_modules
     environment:
-      TINYTASK_MODE: sse
+      # Uses Streamable HTTP by default (modern, efficient transport)
+      TINYTASK_MODE: http
       TINYTASK_PORT: 3000
       TINYTASK_HOST: 0.0.0.0
       TINYTASK_DB_PATH: /data/tinytask.db
@@ -23,6 +26,36 @@ services:
     command: npm run dev
     networks:
       - tinytask-network
+
+  # Legacy SSE development service for backward compatibility testing
+  # Use this service to test with the legacy SSE transport
+  # Note: Uses port 3001 to avoid conflicts if both services run simultaneously
+  tinytask-dev-sse:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: tinytask-mcp-dev-sse
+    ports:
+      - "3001:3001"
+      - "9230:9229"  # Debug port (different from main service)
+    volumes:
+      - ./src:/app/src:ro
+      - ./data-sse:/data  # Separate data directory to avoid conflicts
+      - /app/node_modules
+    environment:
+      # Enable legacy SSE transport for backward compatibility
+      TINYTASK_MODE: http
+      TINYTASK_ENABLE_SSE: 'true'
+      TINYTASK_PORT: 3001
+      TINYTASK_HOST: 0.0.0.0
+      TINYTASK_DB_PATH: /data/tinytask-sse.db
+      TINYTASK_LOG_LEVEL: debug
+      NODE_ENV: development
+    command: npm run dev
+    networks:
+      - tinytask-network
+    profiles:
+      - legacy  # Only starts when explicitly requested: docker-compose --profile legacy up
 
 networks:
   tinytask-network:

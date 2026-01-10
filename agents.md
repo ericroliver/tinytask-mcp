@@ -8,7 +8,7 @@
 - **Runtime**: Node.js with TypeScript
 - **Database**: SQLite with better-sqlite3
 - **MCP Protocol**: @modelcontextprotocol/sdk
-- **HTTP Server**: Express (for SSE transport)
+- **HTTP Server**: Express (Streamable HTTP default, SSE legacy)
 - **Validation**: Zod
 - **Testing**: Vitest
 - **Linting**: ESLint with TypeScript support
@@ -43,8 +43,10 @@ npm run clean              # Remove build directory
 # Production
 npm start                  # Run compiled server (both modes)
 npm run start:stdio        # Run in stdio mode only
-npm run start:sse          # Run in SSE mode only
-npm run start:both         # Run in both modes (default)
+npm run start:http         # Run Streamable HTTP only
+npm run start:http:sse     # Run HTTP with legacy SSE transport
+npm run start:both         # Run stdio + Streamable HTTP
+npm run start:both:sse     # Run stdio + legacy SSE
 
 # Testing
 npm test                   # Run all tests with Vitest
@@ -227,8 +229,10 @@ The project uses ESLint with TypeScript support. Key rules:
 
 ## Environment Variables
 
-- `TINYTASK_MODE`: Server mode (`stdio`, `sse`, or `both`) - default: `both`
-- `TINYTASK_PORT`: HTTP server port for SSE mode - default: `3000`
+
+- `TINYTASK_MODE`: Server mode (`stdio`, `http`, or `both`) - default: `both`
+- `TINYTASK_ENABLE_SSE`: Enable legacy SSE transport when `true` - default: `false`
+- `TINYTASK_PORT`: HTTP server port - default: `3000`
 - `TINYTASK_DB_PATH`: Path to SQLite database file - default: `./data/tinytask.db`
 
 ## MCP Protocol Considerations
@@ -236,14 +240,14 @@ The project uses ESLint with TypeScript support. Key rules:
 When working with MCP tools and resources:
 - Tool handlers must validate input using Zod schemas
 - Resource handlers must return properly formatted MCP resource objects
-- Both stdio and SSE transports must be supported
+- Both stdio and HTTP transports (Streamable HTTP default, SSE legacy) must be supported
 - Error responses must follow MCP error format
 - All async operations must be properly awaited
 
 ## Architectural Boundaries
 
 The project follows a layered architecture:
-1. **Transport Layer** (stdio, SSE) - handles communication
+1. **Transport Layer** (stdio, Streamable HTTP, SSE) - handles communication
 2. **MCP Server Layer** - implements MCP protocol
 3. **Service Layer** - business logic
 4. **Database Layer** - data persistence

@@ -10,7 +10,7 @@
 ✅ **Agent Queues** - Each agent can query their assigned tasks  
 ✅ **Collaboration** - Comments and links enable agent communication  
 ✅ **Persistence** - SQLite database with Docker volume persistence  
-✅ **Flexible Transport** - Both stdio (local) and SSE (remote) modes  
+✅ **Flexible Transport** - Stdio (local) plus Streamable HTTP (default) with SSE legacy fallback  
 ✅ **Production Ready** - Docker packaging with health checks
 
 ## Technology Stack
@@ -22,7 +22,7 @@
 | Framework | MCP SDK | Official protocol implementation |
 | Database | SQLite3 | Embedded, zero-config, sufficient for MVP |
 | Container | Docker | Portability and isolation |
-| HTTP | Express.js | For SSE transport mode |
+| HTTP | Express.js | Streamable HTTP default, SSE legacy |
 
 ## Architecture Overview
 
@@ -31,7 +31,7 @@
 │                   LLM Agents                        │
 │  (Product, Architect, Code, Review, QA, etc.)       │
 └──────────────┬──────────────────────────────────────┘
-               │ MCP Protocol (stdio/SSE)
+               │ MCP Protocol (stdio/HTTP)
 ┌──────────────▼──────────────────────────────────────┐
 │              TinyTask MCP Server                    │
 │  ┌─────────────────────────────────────────────┐   │
@@ -111,14 +111,19 @@ See: [`docs/technical/mcp-api-design.md`](technical/mcp-api-design.md)
 docker run -v ./data:/data -e TINYTASK_MODE=stdio tinytask-mcp
 ```
 
-**SSE Mode** (Production Multi-Agent)
+**Streamable HTTP Mode** (Production Multi-Agent)
 ```bash
-docker run -p 3000:3000 -v ./data:/data -e TINYTASK_MODE=sse tinytask-mcp
+docker run -p 3000:3000 -v ./data:/data -e TINYTASK_MODE=http tinytask-mcp
 ```
 
 **Both Modes**
 ```bash
 docker run -p 3000:3000 -v ./data:/data -e TINYTASK_MODE=both tinytask-mcp
+```
+
+**Legacy SSE**
+```bash
+docker run -p 3000:3000 -v ./data:/data -e TINYTASK_MODE=http -e TINYTASK_ENABLE_SSE=true tinytask-mcp
 ```
 
 See: [`docs/technical/docker-deployment.md`](technical/docker-deployment.md)

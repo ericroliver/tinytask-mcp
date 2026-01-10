@@ -1,0 +1,83 @@
+# Docker Compose configuration for Legacy SSE Transport
+# 
+# This configuration is for users who need to use the legacy Server-Sent Events (SSE)
+# transport instead of the modern Streamable HTTP transport.
+#
+# WHEN TO USE THIS:
+# - You have existing SSE clients that haven't been migrated yet
+# - You need to test backward compatibility with SSE
+# - You're running older MCP clients that don't support Streamable HTTP
+#
+# MIGRATION GUIDE:
+# For new deployments, we recommend using the default docker-compose.yml which uses
+# Streamable HTTP transport. See docs/product/streamable-http-migration-guide.md
+# for guidance on migrating from SSE to Streamable HTTP.
+#
+# USAGE:
+# docker-compose -f docker-compose.legacy-sse.yml up -d
+#
+# Note: This file uses the standard Dockerfile, as both transports are supported
+# by the same codebase. The transport is selected via environment variables.
+
+services:
+  tinytask-sse:
+    image: tinytask-mcp:latest-sse
+    container_name: tinytask-mcp-sse
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    volumes:
+      # Persistent database storage
+      - ./data:/data
+    environment:
+      # Transport mode: http for SSE transport
+      TINYTASK_MODE: http
+      
+      # CRITICAL: Enable legacy SSE transport
+      # Without this, the server uses Streamable HTTP by default
+      TINYTASK_ENABLE_SSE: 'true'
+      
+      # HTTP server configuration
+      TINYTASK_PORT: 3000
+      TINYTASK_HOST: 0.0.0.0
+      
+      # Database
+      TINYTASK_DB_PATH: /data/tinytask.db
+      
+      # Logging
+      # Options: error, warn, info (default), debug, trace
+      # Use 'trace' for forensic debugging, 'info' for production
+      TINYTASK_LOG_LEVEL: info
+      
+      # Node environment
+      NODE_ENV: production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    networks:
+      - tinytask-network
+    labels:
+      # Labels to identify this as a legacy SSE deployment
+      com.tinytask.transport: "sse"
+      com.tinytask.legacy: "true"
+      com.tinytask.migration-guide: "docs/product/streamable-http-migration-guide.md"
+
+networks:
+  tinytask-network:
+    driver: bridge
+
+# MIGRATION PATH:
+# When you're ready to migrate to Streamable HTTP:
+# 1. Test your client with the new transport (see migration guide)
+# 2. Switch to docker-compose.yml (which uses Streamable HTTP)
+# 3. Remove TINYTASK_ENABLE_SSE environment variable
+# 4. Redeploy: docker-compose -f docker-compose.yml up -d
+#
+# The migration is backward compatible - the server supports both transports
+# and can be switched back to SSE if needed by setting TINYTASK_ENABLE_SSE=true

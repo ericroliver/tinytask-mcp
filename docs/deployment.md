@@ -37,8 +37,8 @@ npm run build
 # Run in development mode with auto-reload
 npm run dev
 
-# Or run production build
-npm run start:sse
+# Or run production build (Streamable HTTP)
+npm run start:http
 ```
 
 ### Configuration
@@ -63,13 +63,22 @@ TINYTASK_DB_PATH=./data/tinytask.db
 # Build the image
 docker build -t tinytask-mcp .
 
-# Run the container
+# Run the container (Streamable HTTP default)
 docker run -d \
   --name tinytask-mcp \
   -p 3000:3000 \
   -v $(pwd)/data:/app/data \
-  -e TINYTASK_MODE=sse \
+  -e TINYTASK_MODE=http \
   -e TINYTASK_PORT=3000 \
+  tinytask-mcp
+
+# Legacy SSE mode
+docker run -d \
+  --name tinytask-mcp-sse \
+  -p 3000:3000 \
+  -v $(pwd)/data:/app/data \
+  -e TINYTASK_MODE=http \
+  -e TINYTASK_ENABLE_SSE=true \
   tinytask-mcp
 ```
 
@@ -103,7 +112,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - TINYTASK_MODE=sse
+      - TINYTASK_MODE=http
       - TINYTASK_PORT=3000
       - TINYTASK_DB_PATH=/app/data/tinytask.db
     volumes:
@@ -134,6 +143,7 @@ services:
       - "3000:3000"
     environment:
       - TINYTASK_MODE=both
+      - TINYTASK_ENABLE_SSE=false
       - TINYTASK_PORT=3000
       - DEBUG=tinytask:*
     volumes:
@@ -223,7 +233,7 @@ services:
     ports:
       - "127.0.0.1:3000:3000"  # Only expose locally
     environment:
-      - TINYTASK_MODE=sse
+      - TINYTASK_MODE=http
       - TINYTASK_PORT=3000
       - NODE_ENV=production
     volumes:
@@ -378,7 +388,7 @@ After=network.target
 Type=simple
 User=tinytask
 WorkingDirectory=/opt/tinytask-mcp
-Environment="TINYTASK_MODE=sse"
+Environment="TINYTASK_MODE=http"
 Environment="TINYTASK_PORT=3000"
 Environment="NODE_ENV=production"
 ExecStart=/usr/bin/node /opt/tinytask-mcp/build/index.js
@@ -523,12 +533,12 @@ chown tinytask:tinytask data/tinytask.db
 0 2 * * * /opt/tinytask-mcp/backup.sh
 ```
 
-### Environment Variables
+### Transport Troubleshooting
 
-Never commit sensitive data. Use:
-- Docker secrets
-- Environment files (not in git)
-- Cloud provider secret managers
+- **Verify transport:** `curl http://localhost:3000/health` returns `{ transport: "streamable-http" }` by default or `"sse"` when legacy flag is enabled.
+- **Unexpected SSE:** Ensure `TINYTASK_ENABLE_SSE` isn't set to `true` via Docker or host environment.
+- **Need SSE temporarily:** Add `TINYTASK_ENABLE_SSE=true`, redeploy, and monitor logs for deprecation warnings.
+- **Client mismatch:** Streamable HTTP consolidates GET/POST into a single `/mcp` endpoint; keep legacy clients on SSE until upgraded.
 
 ---
 
