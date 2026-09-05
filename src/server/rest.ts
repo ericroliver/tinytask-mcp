@@ -257,11 +257,18 @@ export function createRestRouter(
         }
       }
 
+      const includeDescriptionResult = parseQueryBool(req.query.include_description as string | undefined, 'include_description');
+      if (includeDescriptionResult.error) {
+        res.status(400).json({ error: includeDescriptionResult.error });
+        return;
+      }
+
       const tasks = taskService.list({
         assigned_to: req.query.assigned_to as string | undefined,
         status: statusResult.value,
         exclude_status: excludeStatusResult.value,
         include_archived: includeArchivedResult.value ?? false,
+        include_description: includeDescriptionResult.value,
         limit: limitResult.value,
         offset: offsetResult.value,
         queue_name: req.query.queue_name as string | undefined,
@@ -478,7 +485,12 @@ export function createRestRouter(
   // GET /api/v1/agents/:name/queue — get_my_queue
   router.get('/agents/:name/queue', (req: Request, res: Response) => {
     try {
-      const tasks = taskService.getQueue(req.params.name);
+      const includeDescriptionResult = parseQueryBool(req.query.include_description as string | undefined, 'include_description');
+      if (includeDescriptionResult.error) {
+        res.status(400).json({ error: includeDescriptionResult.error });
+        return;
+      }
+      const tasks = taskService.getQueue(req.params.name, includeDescriptionResult.value);
       res.json(tasks);
     } catch (e) {
       res.status(400).json({ error: e instanceof Error ? e.message : String(e) });

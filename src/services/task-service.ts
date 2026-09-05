@@ -470,12 +470,14 @@ export class TaskService {
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    // SQLite requires LIMIT before OFFSET. Use LIMIT -1 to mean "no limit" when only offset is provided.
-    const limitClause = filters.limit ? `LIMIT ${filters.limit}` : filters.offset ? 'LIMIT -1' : '';
+    // Enforce a default limit so list responses stay bounded (token burn guard).
+    const limit = filters.limit ?? TaskService.DEFAULT_LIST_LIMIT;
+    const limitClause = `LIMIT ${limit}`;
     const offsetClause = filters.offset ? `OFFSET ${filters.offset}` : '';
+    const columns = this.resolveListColumns(filters.include_description);
 
     const sql = `
-      SELECT * FROM tasks
+      SELECT ${columns} FROM tasks
       ${whereClause}
       ORDER BY priority DESC, created_at ASC
       ${limitClause} ${offsetClause}
@@ -488,9 +490,10 @@ export class TaskService {
   /**
    * Get agent's task queue (assigned open tasks)
    */
-  getQueue(agentName: string): ParsedTask[] {
+  getQueue(agentName: string, includeDescription?: boolean): ParsedTask[] {
+    const columns = this.resolveListColumns(includeDescription);
     const tasks = this.db.query<Task>(
-      `SELECT * FROM tasks
+      `SELECT ${columns} FROM tasks
        WHERE assigned_to = ?
          AND status IN ('idle', 'working')
          AND archived_at IS NULL
@@ -846,6 +849,41 @@ export class TaskService {
   /**
    * Parse task from database row (handle JSON tags, compute blocking state, convert timestamps to ISO 8601)
    */
+  /**
+   * Columns for list-style queries. Description is excluded by default to keep
+   * payloads small — it dominates list response size and burns agent tokens.
+   */
+  private static readonly TASK_SUMMARY_COLUMNS = [
+    'id',
+    'title',
+    'status',
+    'assigned_to',
+    'previous_assigned_to',
+    'created_by',
+    'priority',
+    'tags',
+    'parent_task_id',
+    'queue_name',
+    'blocked_by_task_id',
+    'created_at',
+    'updated_at',
+    'archived_at',
+  ].join(', ');
+
+  /** Server-wide default maximum for list results. */
+  private static readonly DEFAULT_LIST_LIMIT = 100;
+
+  /**
+   * Resolve the column projection for list-style queries.
+   * Descriptions are omitted unless explicitly requested via the filter or the
+   * TINYTASK_LIST_INCLUDE_DESCRIPTION=true environment escape hatch.
+   */
+  private resolveListColumns(includeDescription?: boolean): string {
+    const wantDescription =
+      includeDescription ?? process.env.TINYTASK_LIST_INCLUDE_DESCRIPTION === 'true';
+    return wantDescription ? '*' : TaskService.TASK_SUMMARY_COLUMNS;
+  }
+
   private parseTask(task: Task): ParsedTask {
     return {
       ...task,

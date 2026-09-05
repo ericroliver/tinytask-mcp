@@ -62,6 +62,7 @@ export interface QueueFilters {
   parent_task_id?: number;
   exclude_subtasks?: boolean;
   include_archived?: boolean;
+  include_description?: boolean;
   limit?: number;
   offset?: number;
 }

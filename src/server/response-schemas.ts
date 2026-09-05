@@ -75,7 +75,19 @@ export const QueueStatsSchema = z.object({
 
 // ─── List/wrapper types ──────────────────────────────────────
 
-export const TaskListSchema = z.array(ParsedTaskSchema);
+/**
+ * List responses omit `description` unless explicitly requested
+ * (include_description=true) to keep payloads small.
+ */
+export const TaskListItemSchema = ParsedTaskSchema.omit({ description: true }).extend({
+  description: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Task description - omitted unless include_description=true'),
+});
+
+export const TaskListSchema = z.array(TaskListItemSchema);
 export const CommentListSchema = z.array(CommentDataSchema);
 export const LinkListSchema = z.array(LinkDataSchema);
 export const StringListSchema = z.array(z.string());

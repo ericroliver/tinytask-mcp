@@ -55,6 +55,7 @@ export const toolSchemas = {
     ]).optional().describe('Filter by status (single value or array of statuses)'),
     exclude_status: z.array(z.enum(['idle', 'working', 'complete'])).optional().describe('Exclude tasks with these statuses'),
     include_archived: z.boolean().optional().describe('Include archived tasks'),
+    include_description: z.boolean().optional().describe('Include full task descriptions (default: false - descriptions omitted to keep responses small)'),
     limit: z.coerce.number().optional().describe('Max results (default: 100)'),
     offset: z.coerce.number().optional().describe('Pagination offset'),
     queue_name: z.string().optional().describe('Filter by queue name'),
@@ -92,6 +93,7 @@ export const toolSchemas = {
 
   get_my_queue: z.object({
     agent_name: z.string().describe('Agent name'),
+    include_description: z.boolean().optional().describe('Include full task descriptions (default: false - descriptions omitted to keep responses small)'),
   }).strict(),
 
   signup_for_task: z.object({

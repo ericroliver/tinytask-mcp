@@ -84,6 +84,7 @@ export interface TaskFilters {
   status?: TaskStatus | TaskStatus[];
   exclude_status?: TaskStatus[];
   include_archived?: boolean;
+  include_description?: boolean;
   limit?: number;
   offset?: number;
   queue_name?: string;

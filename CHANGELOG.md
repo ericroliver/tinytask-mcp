@@ -5,6 +5,28 @@ All notable changes to TinyTask MCP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-09-05
+
+### Changed
+- **Task list responses are much slimmer by default** (token burn fix). `list_tasks` (MCP),
+  `GET /api/v1/tasks` and `GET /api/v1/agents/{name}/queue` now:
+  - omit the `description` field from each task (descriptions were ~62% of list payload),
+  - cap results at 100 unless an explicit `limit` is passed (previously unbounded).
+  Request `include_description=true` (REST query param / MCP tool arg) to get full
+  descriptions, or set server env `TINYTASK_LIST_INCLUDE_DESCRIPTION=true` to restore the
+  old behavior globally.
+
+### Added
+- CLI 0.4.0: `task list --full` (include descriptions), `task list --fields id,title,...`
+  (client-side field projection), `task list --format table|json|csv|compact`
+  (per-invocation format override).
+
+### Fixed
+- CLI: `queue list` and `queue view` render correctly in table, compact and csv formats
+  (previously fell through to the single-task formatter and printed `Task #undefined`).
+- CLI: `ping` performs a real server round-trip, reports URL + latency, and exits non-zero
+  when the server is unreachable.
+
 ## [1.0.0] - 2024-01-01
 
 ### Initial Release
