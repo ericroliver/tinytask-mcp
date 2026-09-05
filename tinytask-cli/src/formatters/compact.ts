@@ -16,6 +16,10 @@ export class CompactFormatter implements Formatter {
       return this.formatComments(data as Record<string, unknown>);
     } else if (typeof data === 'object' && data !== null && 'task_id' in data && 'links' in data) {
       return this.formatLinks(data as Record<string, unknown>);
+    } else if (typeof data === 'object' && data !== null && 'queues' in data) {
+      return this.formatQueueList(data as Record<string, unknown>);
+    } else if (typeof data === 'object' && data !== null && 'agent' in data && 'tasks' in data) {
+      return this.formatQueueView(data as Record<string, unknown>);
     } else if (
       typeof data === 'object' &&
       data !== null &&
@@ -34,6 +38,38 @@ export class CompactFormatter implements Formatter {
     } else {
       return this.formatTask(data);
     }
+  }
+
+  private formatQueueList(queueData: Record<string, unknown>): string {
+    const { count, queues } = queueData;
+    const queueCount =
+      typeof count === 'number' ? count : Array.isArray(queues) ? queues.length : 0;
+
+    if (!Array.isArray(queues) || queues.length === 0) {
+      const msg = 'No queues';
+      return this.options.color ? chalk.yellow(msg) : msg;
+    }
+
+    const header = `Queues (${queueCount}): ${queues.map((q) => String(q)).join(', ')}`;
+    return this.options.color ? chalk.cyan(header) : header;
+  }
+
+  private formatQueueView(queueData: Record<string, unknown>): string {
+    const { agent, count, tasks } = queueData;
+    const taskCount = typeof count === 'number' ? count : Array.isArray(tasks) ? tasks.length : 0;
+
+    const lines = [];
+    const header = `Queue for ${agent} (${taskCount} task${taskCount !== 1 ? 's' : ''})`;
+    lines.push(this.options.color ? chalk.cyan.bold(header) : header);
+
+    if (!Array.isArray(tasks) || tasks.length === 0) {
+      const msg = 'No tasks in queue';
+      lines.push(this.options.color ? chalk.yellow(msg) : msg);
+      return lines.join('\n');
+    }
+
+    lines.push(tasks.map((task) => this.formatTask(task)).join('\n'));
+    return lines.join('\n');
   }
 
   private formatLinks(linkData: Record<string, unknown>): string {

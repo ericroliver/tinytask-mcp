@@ -4,6 +4,9 @@ import { ensureConnected } from '../../client/connection.js';
 import { createFormatter } from '../../formatters/index.js';
 import { loadConfig } from '../../config/loader.js';
 import { TaskFilters } from '../../client/mcp-client.js';
+import { projectTaskFields } from '../../utils/fields.js';
+
+const VALID_FORMATS = ['table', 'json', 'csv', 'compact'];
 
 export function createTaskListCommand(program: Command): void {
   program
@@ -17,13 +20,28 @@ export function createTaskListCommand(program: Command): void {
     .option('--parent <id>', 'Filter by parent task ID', parseInt)
     .option('--exclude-subtasks', 'Exclude subtasks from results')
     .option('--include-archived', 'Include archived tasks')
-    .option('--limit <number>', 'Limit number of results', parseInt)
+    .option(
+      '--full',
+      'Include full task descriptions (descriptions are omitted by default to keep responses small)'
+    )
+    .option('--fields <fields>', 'Comma-separated task fields to include (e.g., id,title,status)')
+    .option('--format <format>', 'Output format override (table, json, csv, compact)')
+    .option('--limit <number>', 'Limit number of results (default: 100)', parseInt)
     .option('--offset <number>', 'Offset for pagination', parseInt)
     .action(async (options, command) => {
       try {
+        if (options.format && !VALID_FORMATS.includes(options.format)) {
+          console.error(
+            chalk.red(
+              `Error: Invalid format '${options.format}'. Valid formats: ${VALID_FORMATS.join(', ')}`
+            )
+          );
+          process.exit(1);
+        }
+
         const config = await loadConfig({
           url: command.optsWithGlobals().url,
-          outputFormat: command.optsWithGlobals().json ? 'json' : undefined,
+          outputFormat: command.optsWithGlobals().json ? 'json' : options.format,
         });
 
         if (!config.url) {
@@ -48,6 +66,7 @@ export function createTaskListCommand(program: Command): void {
         if (options.parent !== undefined) filters.parent_task_id = options.parent;
         if (options.excludeSubtasks) filters.exclude_subtasks = true;
         if (options.includeArchived) filters.include_archived = true;
+        if (options.full) filters.include_description = true;
         if (options.limit) filters.limit = options.limit;
         if (options.offset) filters.offset = options.offset;
 
@@ -55,7 +74,16 @@ export function createTaskListCommand(program: Command): void {
 
         // Handle different response formats
         const response = result as Record<string, unknown>;
-        const tasks = response.tasks || result;
+        let tasks = (response.tasks || result) as unknown[];
+
+        // Client-side field projection (--fields id,title,...)
+        if (options.fields) {
+          const fields = String(options.fields)
+            .split(',')
+            .map((f: string) => f.trim())
+            .filter(Boolean);
+          tasks = projectTaskFields(tasks, fields);
+        }
 
         const formatter = createFormatter(config.outputFormat, {
           color: config.colorOutput,

@@ -16,6 +16,7 @@ export async function createTaskHandler(
     parent_task_id?: number;
     queue_name?: string;
     blocked_by_task_id?: number;
+    auto_promote?: boolean;
   }
 ) {
   try {
@@ -243,6 +244,7 @@ export async function updateTaskHandler(
     parent_task_id?: number;
     queue_name?: string;
     blocked_by_task_id?: number | null;
+    auto_promote?: boolean;
   }
 ) {
   try {
@@ -363,6 +365,7 @@ export async function listTasksHandler(
     status?: 'idle' | 'working' | 'complete' | ('idle' | 'working' | 'complete')[];
     exclude_status?: ('idle' | 'working' | 'complete')[];
     include_archived?: boolean;
+    include_description?: boolean;
     limit?: number;
     offset?: number;
     queue_name?: string;
@@ -400,9 +403,12 @@ export async function listTasksHandler(
   }
 }
 
-export async function getMyQueueHandler(taskService: TaskService, params: { agent_name: string }) {
+export async function getMyQueueHandler(
+  taskService: TaskService,
+  params: { agent_name: string; include_description?: boolean }
+) {
   try {
-    const tasks = taskService.getQueue(params.agent_name);
+    const tasks = taskService.getQueue(params.agent_name, params.include_description);
     return {
       content: [
         {

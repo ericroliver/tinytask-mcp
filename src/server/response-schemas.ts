@@ -25,6 +25,7 @@ export const ParsedTaskSchema = z.object({
   queue_name: z.string().nullable().describe('Queue name the task belongs to'),
   blocked_by_task_id: z.number().nullable().describe('ID of task blocking this one'),
   is_currently_blocked: z.boolean().describe('Whether the task is currently blocked'),
+  auto_promote: z.boolean().describe("Whether the task's status auto-updates from its children (default: true)"),
   created_at: z.string().describe('ISO timestamp of creation'),
   updated_at: z.string().describe('ISO timestamp of last update'),
   archived_at: z.string().nullable().describe('ISO timestamp of archival, null if not archived'),
@@ -75,7 +76,19 @@ export const QueueStatsSchema = z.object({
 
 // ─── List/wrapper types ──────────────────────────────────────
 
-export const TaskListSchema = z.array(ParsedTaskSchema);
+/**
+ * List responses omit `description` unless explicitly requested
+ * (include_description=true) to keep payloads small.
+ */
+export const TaskListItemSchema = ParsedTaskSchema.omit({ description: true }).extend({
+  description: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Task description - omitted unless include_description=true'),
+});
+
+export const TaskListSchema = z.array(TaskListItemSchema);
 export const CommentListSchema = z.array(CommentDataSchema);
 export const LinkListSchema = z.array(LinkDataSchema);
 export const StringListSchema = z.array(z.string());

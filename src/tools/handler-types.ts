@@ -12,6 +12,7 @@ export interface CreateTaskParams {
   tags?: string[];
   parent_task_id?: number;
   queue_name?: string;
+  auto_promote?: boolean;
 }
 
 export interface UpdateTaskParams {
@@ -24,6 +25,7 @@ export interface UpdateTaskParams {
   tags?: string[];
   parent_task_id?: number;
   queue_name?: string;
+  auto_promote?: boolean;
 }
 
 export interface GetTaskParams {
@@ -43,6 +45,7 @@ export interface ListTasksParams {
   status?: 'idle' | 'working' | 'complete' | ('idle' | 'working' | 'complete')[];
   exclude_status?: ('idle' | 'working' | 'complete')[];
   include_archived?: boolean;
+  include_description?: boolean;
   limit?: number;
   offset?: number;
   queue_name?: string;
@@ -52,6 +55,7 @@ export interface ListTasksParams {
 
 export interface GetMyQueueParams {
   agent_name: string;
+  include_description?: boolean;
 }
 
 export interface SignupForTaskParams {

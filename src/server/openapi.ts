@@ -127,13 +127,6 @@ function zodToJsonSchema(schema: z.ZodTypeAny): JsonSchema {
   return { type: 'string' };
 }
 
-/**
- * Extract description from a Zod schema (top-level).
- */
-function zodDescription(schema: z.ZodTypeAny): string | undefined {
-  return schema.description || undefined;
-}
-
 // ─── Component schemas ──────────────────────────────────────
 
 function buildComponentSchemas(): Record<string, JsonSchema> {
@@ -241,6 +234,7 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
           { name: 'assigned_to', in: 'query', schema: { type: 'string' }, description: 'Filter by assignee' },
           { name: 'status', in: 'query', schema: { type: 'string', enum: ['idle', 'working', 'complete'] }, description: 'Filter by status' },
           { name: 'include_archived', in: 'query', schema: { type: 'boolean' }, description: 'Include archived tasks' },
+          { name: 'include_description', in: 'query', schema: { type: 'boolean' }, description: 'Include full task descriptions (default: false - omitted to keep responses small)' },
           { name: 'limit', in: 'query', schema: { type: 'number' }, description: 'Max results (default: 100)' },
           { name: 'offset', in: 'query', schema: { type: 'number' }, description: 'Pagination offset' },
           { name: 'queue_name', in: 'query', schema: { type: 'string' }, description: 'Filter by queue name' },
@@ -422,6 +416,7 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         tags: ['Agents'],
         parameters: [
           { name: 'name', in: 'path', required: true, schema: { type: 'string' }, description: 'Agent name' },
+          { name: 'include_description', in: 'query', schema: { type: 'boolean' }, description: 'Include full task descriptions (default: false - omitted to keep responses small)' },
         ],
         responses: {
           '200': jsonResponse('TaskList'),

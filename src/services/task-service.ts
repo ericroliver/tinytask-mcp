@@ -88,8 +88,8 @@ export class TaskService {
       const queueName = params.queue_name !== undefined ? params.queue_name : parentQueueName;
 
       const result = this.db.execute(
-        `INSERT INTO tasks (title, description, status, assigned_to, created_by, priority, tags, parent_task_id, queue_name, blocked_by_task_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO tasks (title, description, status, assigned_to, created_by, priority, tags, parent_task_id, queue_name, blocked_by_task_id, auto_promote)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           params.title.trim(),
           params.description || null,
@@ -101,6 +101,7 @@ export class TaskService {
           params.parent_task_id || null,
           queueName,
           params.blocked_by_task_id || null,
+          params.auto_promote === false ? 0 : 1,
         ]
       );
 
@@ -299,6 +300,11 @@ export class TaskService {
         values.push(updates.blocked_by_task_id);
       }
 
+      if (updates.auto_promote !== undefined) {
+        fields.push('auto_promote = ?');
+        values.push(updates.auto_promote ? 1 : 0);
+      }
+
       // Always update updated_at
       fields.push('updated_at = CURRENT_TIMESTAMP');
 
@@ -470,12 +476,14 @@ export class TaskService {
     }
 
     const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-    // SQLite requires LIMIT before OFFSET. Use LIMIT -1 to mean "no limit" when only offset is provided.
-    const limitClause = filters.limit ? `LIMIT ${filters.limit}` : filters.offset ? 'LIMIT -1' : '';
+    // Enforce a default limit so list responses stay bounded (token burn guard).
+    const limit = filters.limit ?? TaskService.DEFAULT_LIST_LIMIT;
+    const limitClause = `LIMIT ${limit}`;
     const offsetClause = filters.offset ? `OFFSET ${filters.offset}` : '';
+    const columns = this.resolveListColumns(filters.include_description);
 
     const sql = `
-      SELECT * FROM tasks
+      SELECT ${columns} FROM tasks
       ${whereClause}
       ORDER BY priority DESC, created_at ASC
       ${limitClause} ${offsetClause}
@@ -488,9 +496,10 @@ export class TaskService {
   /**
    * Get agent's task queue (assigned open tasks)
    */
-  getQueue(agentName: string): ParsedTask[] {
+  getQueue(agentName: string, includeDescription?: boolean): ParsedTask[] {
+    const columns = this.resolveListColumns(includeDescription);
     const tasks = this.db.query<Task>(
-      `SELECT * FROM tasks
+      `SELECT ${columns} FROM tasks
        WHERE assigned_to = ?
          AND status IN ('idle', 'working')
          AND archived_at IS NULL
@@ -846,11 +855,48 @@ export class TaskService {
   /**
    * Parse task from database row (handle JSON tags, compute blocking state, convert timestamps to ISO 8601)
    */
+  /**
+   * Columns for list-style queries. Description is excluded by default to keep
+   * payloads small — it dominates list response size and burns agent tokens.
+   */
+  private static readonly TASK_SUMMARY_COLUMNS = [
+    'id',
+    'title',
+    'status',
+    'assigned_to',
+    'previous_assigned_to',
+    'created_by',
+    'priority',
+    'tags',
+    'parent_task_id',
+    'queue_name',
+    'blocked_by_task_id',
+    'auto_promote',
+    'created_at',
+    'updated_at',
+    'archived_at',
+  ].join(', ');
+
+  /** Server-wide default maximum for list results. */
+  private static readonly DEFAULT_LIST_LIMIT = 100;
+
+  /**
+   * Resolve the column projection for list-style queries.
+   * Descriptions are omitted unless explicitly requested via the filter or the
+   * TINYTASK_LIST_INCLUDE_DESCRIPTION=true environment escape hatch.
+   */
+  private resolveListColumns(includeDescription?: boolean): string {
+    const wantDescription =
+      includeDescription ?? process.env.TINYTASK_LIST_INCLUDE_DESCRIPTION === 'true';
+    return wantDescription ? '*' : TaskService.TASK_SUMMARY_COLUMNS;
+  }
+
   private parseTask(task: Task): ParsedTask {
     return {
       ...task,
       tags: task.tags ? JSON.parse(task.tags as string) : [],
       is_currently_blocked: this.isCurrentlyBlocked(task),
+      auto_promote: task.auto_promote !== 0,
       created_at: toISO8601(task.created_at),
       updated_at: toISO8601(task.updated_at),
       archived_at: task.archived_at ? toISO8601(task.archived_at) : null,
@@ -893,24 +939,21 @@ export class TaskService {
       newStatus = 'idle';
     }
 
-    // Update parent status if it changed
-    const parent = this.db.queryOne<Task>('SELECT id, status FROM tasks WHERE id = ?', [parentId]);
+    // Check parent's auto_promote opt-out flag
+    const parent = this.db.queryOne<Task>(
+      'SELECT id, status, auto_promote FROM tasks WHERE id = ?',
+      [parentId]
+    );
 
-    if (parent && parent.status !== newStatus) {
-      this.db.execute('UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [
-        newStatus,
-        parentId,
-      ]);
-
-      // Recursively update grandparent if exists
-      const updatedParent = this.db.queryOne<Task>(
-        'SELECT parent_task_id FROM tasks WHERE id = ?',
-        [parentId]
-      );
-
-      if (updatedParent?.parent_task_id != null) {
-        this.updateParentStatus(updatedParent.parent_task_id);
-      }
+    if (!parent || parent.status === newStatus || parent.auto_promote === 0) {
+      // No change needed, or parent opted out of auto-promotion.
+      // Status is unchanged, so no need to propagate to grandparents either.
+      return;
     }
+
+    // Route the promotion through update() so it is auditable: updated_at is
+    // refreshed, TaskUpdated/TaskStatusChanged events are emitted, and the
+    // grandparent is updated recursively when this status change lands.
+    this.update(parentId, { status: newStatus });
   }
 }

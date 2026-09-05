@@ -11,6 +11,7 @@ export interface CreateTaskParams {
   tags?: string[];
   parent_task_id?: number;
   queue_name?: string;
+  auto_promote?: boolean;
 }
 
 export interface UpdateTaskParams {
@@ -23,6 +24,7 @@ export interface UpdateTaskParams {
   tags?: string[];
   parent_task_id?: number;
   queue_name?: string;
+  auto_promote?: boolean;
 }
 
 export interface TaskFilters {
@@ -62,6 +64,7 @@ export interface QueueFilters {
   parent_task_id?: number;
   exclude_subtasks?: boolean;
   include_archived?: boolean;
+  include_description?: boolean;
   limit?: number;
   offset?: number;
 }

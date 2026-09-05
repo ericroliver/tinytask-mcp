@@ -129,6 +129,11 @@ function validateTaskBodyFields(body: Record<string, unknown>, isPatch: boolean)
     }
   }
 
+  // auto_promote: must be a boolean if provided
+  if (body.auto_promote !== undefined && typeof body.auto_promote !== 'boolean') {
+    return 'auto_promote must be a boolean';
+  }
+
   // description: must be a string if provided
   if (body.description !== undefined && body.description !== null && !isString(body.description)) {
     return 'description must be a string';
@@ -196,6 +201,7 @@ export function createRestRouter(
         parent_task_id: req.body.parent_task_id,
         queue_name: req.body.queue_name,
         blocked_by_task_id: req.body.blocked_by_task_id,
+        auto_promote: req.body.auto_promote,
       });
       res.status(201).json(task);
     } catch (e) {
@@ -257,11 +263,18 @@ export function createRestRouter(
         }
       }
 
+      const includeDescriptionResult = parseQueryBool(req.query.include_description as string | undefined, 'include_description');
+      if (includeDescriptionResult.error) {
+        res.status(400).json({ error: includeDescriptionResult.error });
+        return;
+      }
+
       const tasks = taskService.list({
         assigned_to: req.query.assigned_to as string | undefined,
         status: statusResult.value,
         exclude_status: excludeStatusResult.value,
         include_archived: includeArchivedResult.value ?? false,
+        include_description: includeDescriptionResult.value,
         limit: limitResult.value,
         offset: offsetResult.value,
         queue_name: req.query.queue_name as string | undefined,
@@ -319,6 +332,7 @@ export function createRestRouter(
         parent_task_id: req.body.parent_task_id,
         queue_name: req.body.queue_name,
         blocked_by_task_id: req.body.blocked_by_task_id,
+        auto_promote: req.body.auto_promote,
       });
       res.json(task);
     } catch (e) {
@@ -478,7 +492,12 @@ export function createRestRouter(
   // GET /api/v1/agents/:name/queue — get_my_queue
   router.get('/agents/:name/queue', (req: Request, res: Response) => {
     try {
-      const tasks = taskService.getQueue(req.params.name);
+      const includeDescriptionResult = parseQueryBool(req.query.include_description as string | undefined, 'include_description');
+      if (includeDescriptionResult.error) {
+        res.status(400).json({ error: includeDescriptionResult.error });
+        return;
+      }
+      const tasks = taskService.getQueue(req.params.name, includeDescriptionResult.value);
       res.json(tasks);
     } catch (e) {
       res.status(400).json({ error: e instanceof Error ? e.message : String(e) });

@@ -62,7 +62,8 @@ describe('Performance', () => {
     const queryTime = Date.now() - start;
 
     expect(queryTime).toBeLessThan(200); // < 200ms
-    expect(tasks).toHaveLength(150);
+    expect(tasks).toHaveLength(100); // default limit caps list results
+    expect(client.taskService.listTasks({ limit: 150 })).toHaveLength(150);
   });
 
   test('Individual task retrieval performance', () => {
@@ -193,7 +194,8 @@ describe('Performance', () => {
     const allTasks = client.taskService.listTasks();
     const listTime = Date.now() - start1;
     expect(listTime).toBeLessThan(500); // < 500ms
-    expect(allTasks).toHaveLength(500);
+    expect(allTasks).toHaveLength(100); // default limit caps list results
+    expect(client.taskService.listTasks({ limit: 500 })).toHaveLength(500);
 
     // Queue query should still be fast
     const start2 = Date.now();
