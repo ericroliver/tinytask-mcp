@@ -51,9 +51,9 @@ npm run sea:windows  # Windows executable
 ### Output
 
 Executables are created in `dist/`:
-- `dist/tinytask-macos` - macOS executable (~95 MB)
-- `dist/tinytask-linux` - Linux executable (~95 MB)
-- `dist/tinytask.exe` - Windows executable (~95 MB)
+- `dist/tko-macos` - macOS executable (~95 MB)
+- `dist/tko-linux` - Linux executable (~95 MB)
+- `dist/tko-win.exe` - Windows executable (~95 MB)
 
 ### How It Works
 
@@ -117,7 +117,7 @@ Node.js SEA configuration:
 ```bash
 npm run sea:macos
 # or
-./dist/tinytask-macos --version
+./dist/tko-macos --version
 ```
 
 Includes code signing with `codesign --sign - --force` for ad-hoc signature.
@@ -127,7 +127,7 @@ Includes code signing with `codesign --sign - --force` for ad-hoc signature.
 ```bash
 npm run sea:linux
 # or (on Linux)
-./dist/tinytask-linux --version
+./dist/tko-linux --version
 ```
 
 No code signing required.
@@ -137,8 +137,19 @@ No code signing required.
 ```bash
 npm run sea:windows
 # or (on Windows)
-dist\tinytask.exe --version
+dist\tko-win.exe --version
 ```
+
+Two ways to produce the Windows executable:
+
+- **Native (recommended, on a Windows machine):** the running `node.exe` is a
+  win-x64 Node binary, so it is used directly — no download needed. Or simply
+  run `./deploy-windows.sh` (Git Bash) or `.\deploy-windows.ps1` (PowerShell,
+  works in Windows PowerShell 5.1 and PowerShell 7+) to build and install to
+  `~/.local/bin/tinytask.exe`.
+- **Cross-compiled (from Linux/macOS):** `scripts/sea-windows.mjs` downloads
+  the official `node-v20.19.2-win-x64.zip` and extracts `node.exe`
+  (unzip → python3 → PowerShell fallback), then postject injects the blob.
 
 Note: For distribution, consider proper code signing with a certificate.
 
@@ -146,13 +157,13 @@ Note: For distribution, consider proper code signing with a certificate.
 
 ```bash
 # Test version
-./dist/tinytask-macos --version
+./dist/tko-macos --version
 
 # Test help
-./dist/tinytask-macos --help
+./dist/tko-macos --help
 
 # Test command (requires server)
-./dist/tinytask-macos config show
+./dist/tko-macos config show
 ```
 
 ## Development Workflow
@@ -219,8 +230,8 @@ jobs:
         working-directory: ./tinytask-cli
       - uses: actions/upload-artifact@v4
         with:
-          name: tinytask-macos
-          path: tinytask-cli/dist/tinytask-macos
+          name: tko-macos
+          path: tinytask-cli/dist/tko-macos
 
   build-linux:
     runs-on: ubuntu-latest
@@ -235,8 +246,8 @@ jobs:
         working-directory: ./tinytask-cli
       - uses: actions/upload-artifact@v4
         with:
-          name: tinytask-linux
-          path: tinytask-cli/dist/tinytask-linux
+          name: tko-linux
+          path: tinytask-cli/dist/tko-linux
 
   build-windows:
     runs-on: windows-latest
@@ -252,7 +263,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: tinytask-windows
-          path: tinytask-cli/dist/tinytask.exe
+          path: tinytask-cli/dist/tko-win.exe
 ```
 
 ## Troubleshooting
@@ -287,7 +298,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 
 **Solution**: 
 ```bash
-codesign --sign - --force dist/tinytask-macos
+codesign --sign - --force dist/tko-macos
 # Or use npm run sea:macos which includes signing
 ```
 
@@ -297,8 +308,8 @@ codesign --sign - --force dist/tinytask-macos
 
 **Solution**:
 ```bash
-chmod +x dist/tinytask-linux
-chmod +x dist/tinytask-macos
+chmod +x dist/tko-linux
+chmod +x dist/tko-macos
 ```
 
 ### Verification
@@ -307,14 +318,14 @@ After building, verify the executable:
 
 ```bash
 # Check it exists and is executable
-ls -lh dist/tinytask-macos
+ls -lh dist/tko-macos
 
 # Test basic commands
-./dist/tinytask-macos --version
-./dist/tinytask-macos --help
+./dist/tko-macos --version
+./dist/tko-macos --help
 
 # Test actual functionality (requires server)
-./dist/tinytask-macos config show
+./dist/tko-macos config show
 ```
 
 ## Technical Details
@@ -367,11 +378,11 @@ The executables can be compressed for distribution:
 
 ```bash
 # gzip (reduces to ~30-35 MB)
-gzip -9 dist/tinytask-macos
+gzip -9 dist/tko-macos
 
 # Users decompress:
-gunzip tinytask-macos.gz
-chmod +x tinytask-macos
+gunzip tko-macos.gz
+chmod +x tko-macos
 ```
 
 ## Distribution
@@ -381,9 +392,9 @@ chmod +x tinytask-macos
 ```bash
 # Create release with executables
 gh release create v0.1.0 \
-  dist/tinytask-macos \
-  dist/tinytask-linux \
-  dist/tinytask.exe
+  dist/tko-macos \
+  dist/tko-linux \
+  dist/tko-win.exe
 ```
 
 ### Installation Instructions
@@ -392,22 +403,22 @@ Users can download and run directly:
 
 **macOS:**
 ```bash
-curl -L https://github.com/user/repo/releases/download/v0.1.0/tinytask-macos -o tinytask
+curl -L https://github.com/user/repo/releases/download/v0.1.0/tko-macos -o tinytask
 chmod +x tinytask
 ./tinytask --version
 ```
 
 **Linux:**
 ```bash
-curl -L https://github.com/user/repo/releases/download/v0.1.0/tinytask-linux -o tinytask
+curl -L https://github.com/user/repo/releases/download/v0.1.0/tko-linux -o tinytask
 chmod +x tinytask
 ./tinytask --version
 ```
 
 **Windows:**
 ```powershell
-Invoke-WebRequest -Uri https://github.com/user/repo/releases/download/v0.1.0/tinytask.exe -OutFile tinytask.exe
-.\tinytask.exe --version
+Invoke-WebRequest -Uri https://github.com/user/repo/releases/download/v0.1.0/tko-win.exe -OutFile tko-win.exe
+.\tko-win.exe --version
 ```
 
 ### Code Signing for Distribution
@@ -417,14 +428,26 @@ For production distribution, consider proper code signing:
 **macOS:**
 ```bash
 # With Apple Developer ID
-codesign --sign "Developer ID Application: Your Name" dist/tinytask-macos
+codesign --sign "Developer ID Application: Your Name" dist/tko-macos
 ```
 
 **Windows:**
 ```powershell
 # With code signing certificate
-signtool sign /f cert.pfx /p password /t http://timestamp.digicert.com dist/tinytask.exe
+signtool sign /f cert.pfx /p password /t http://timestamp.digicert.com dist/tko-win.exe
 ```
+
+## One-Command Platform Builds (deploy scripts)
+
+The tinytask-cli directory ships per-platform "build + install locally" scripts:
+
+| Script                | Where to run it            | What it does                                              |
+| --------------------- | -------------------------- | --------------------------------------------------------- |
+| `deploy-linux.sh`     | Linux                      | Build `dist/tko-linux` → install to `~/.local/bin/tinytask` |
+| `deploy-macos.sh`     | macOS                      | Build `dist/tko-macos` → install to `~/.local/bin/tinytask` |
+| `deploy-windows.sh`   | Windows (Git Bash)         | Build `dist/tko-win.exe` → install to `~/.local/bin/tinytask.exe` |
+| `deploy-windows.ps1`  | Windows (PowerShell)       | PowerShell counterpart of `deploy-windows.sh` — same build + install |
+| `deploy.sh`           | m1x-remote (Linux ARM64)   | Build all architectures on build hosts + deploy across the network |
 
 ## Distribution Checklist
 
@@ -434,9 +457,9 @@ Before releasing executables:
 - [ ] Linting passes: `npm run lint`
 - [ ] Version bumped in `package.json`
 - [ ] Bundle builds: `npm run bundle`
-- [ ] macOS executable works: `npm run sea:macos && ./dist/tinytask-macos --version`
-- [ ] Linux executable works (if on Linux): `npm run sea:linux && ./dist/tinytask-linux --version`
-- [ ] Windows executable works (if on Windows): `npm run sea:windows && dist/tinytask.exe --version`
+- [ ] macOS executable works: `npm run sea:macos && ./dist/tko-macos --version`
+- [ ] Linux executable works (if on Linux): `npm run sea:linux && ./dist/tko-linux --version`
+- [ ] Windows executable works (if on Windows): `npm run sea:windows && dist/tko-win.exe --version`
 - [ ] Executables are code-signed (for distribution)
 - [ ] Checksums generated for verification
 - [ ] Release notes prepared

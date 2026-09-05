@@ -1,6 +1,6 @@
 
 
-npm run build 
+npm run build
 npm run package-linux
-cp dist/tinytask-linux ~/.local/bin/tinytask
+cp dist/tko-linux ~/.local/bin/tinytask
 tinytask --version

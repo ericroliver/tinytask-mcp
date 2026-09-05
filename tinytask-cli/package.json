@@ -1,6 +1,6 @@
 {
   "name": "tinytask-cli",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Command-line client for TinyTask MCP server",
   "type": "module",
   "main": "./dist/index.js",
@@ -10,9 +10,9 @@
   "scripts": {
     "build": "tsup",
     "bundle": "node esbuild.config.mjs",
-    "sea:macos": "npm run bundle && node --experimental-sea-config sea-config.json && cp $(command -v node) dist/tinytask-macos && npx postject dist/tinytask-macos NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --macho-segment-name NODE_SEA && codesign --sign - --force dist/tinytask-macos",
-    "sea:linux": "npm run bundle && node --experimental-sea-config sea-config.json && cp $(command -v node) dist/tinytask-linux && npx postject dist/tinytask-linux NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
-    "sea:windows": "npm run bundle && node --experimental-sea-config sea-config.json && node scripts/sea-windows.mjs && npx postject dist/tinytask.exe NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
+    "sea:macos": "npm run bundle && node --experimental-sea-config sea-config.json && cp $(command -v node) dist/tko-macos && npx postject dist/tko-macos NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 --macho-segment-name NODE_SEA && codesign --sign - --force dist/tko-macos",
+    "sea:linux": "npm run bundle && node --experimental-sea-config sea-config.json && cp $(command -v node) dist/tko-linux && npx postject dist/tko-linux NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
+    "sea:windows": "npm run bundle && node --experimental-sea-config sea-config.json && node scripts/sea-windows.mjs && npx postject dist/tko-win.exe NODE_SEA_BLOB sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2",
     "package-mac": "npm run sea:macos",
     "package-linux": "npm run sea:linux",
     "package-windows": "npm run sea:windows",

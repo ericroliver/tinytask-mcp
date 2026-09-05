@@ -5,6 +5,17 @@ All notable changes to the TinyTask CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2026-09-05
+
+### Added
+- Windows build + install support: `deploy-windows.sh` (Git Bash) and `deploy-windows.ps1` (PowerShell, works in Windows PowerShell 5.1 and PowerShell 7+) — both build `dist/tko-win.exe` and install to `~/.local/bin/tinytask.exe`
+- `sea:windows` now builds natively on Windows (uses the local `node.exe` — no download) and gained a PowerShell extraction fallback for cross-builds from Linux/macOS
+
+### Changed
+- **SEA build outputs renamed**: `dist/tinytask-macos` → `dist/tko-macos`, `dist/tinytask-linux` → `dist/tko-linux`, `dist/tinytask.exe` → `dist/tko-win.exe` (installed command name `tinytask` is unchanged)
+- Fixed `deploy-macos.sh` calling non-existent `npm run package` → now `npm run package-mac`
+- Docs: BUILD.md/README.md packaging sections rewritten for SEA flow and `tko-*` artifact names
+
 ## [0.3.1] - 2026-08-13
 
 ### Added

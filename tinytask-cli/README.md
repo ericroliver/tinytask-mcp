@@ -23,30 +23,18 @@ tinytask --help
 
 ## Building Standalone Executables
 
-TinyTask CLI can be packaged into standalone executables for distribution without requiring Node.js installation.
+TinyTask CLI uses **Node.js Single Executable Applications (SEA)** to package a true standalone executable that runs without a Node.js installation. See [BUILD.md](BUILD.md) for the full details.
 
-### Package for All Platforms
-
-```bash
-npm run package
-```
-
-This will generate platform-specific executables in `dist/binaries/`:
-- `tinytask-linux` - Linux x64
-- `tinytask-macos` - macOS x64
-- `tinytask-win.exe` - Windows x64
-
-### Custom Packaging
-
-You can also run pkg directly with custom targets:
+### Package Per Platform
 
 ```bash
-# Build only for specific platform
-npx pkg . --targets node18-linux-x64 --output dist/binaries/tinytask
-
-# Build for different Node.js version
-npx pkg . --targets node20-macos-x64,node20-win-x64 --output dist/binaries/tinytask
+npm run package-mac       # macOS executable   → dist/tko-macos
+npm run package-linux     # Linux executable   → dist/tko-linux
+npm run package-windows   # Windows executable → dist/tko-win.exe
 ```
+
+The Windows build works natively on Windows (uses the local `node.exe`) or
+cross-compiled from Linux/macOS (downloads the official win-x64 node binary).
 
 ### Distribution
 
@@ -54,21 +42,13 @@ The generated executables are self-contained and can be distributed as-is. Users
 
 ```bash
 # Linux/macOS
-./tinytask-macos --version
-./tinytask-macos task list
+./tko-linux --version
+./tko-macos task list
 
 # Windows
-tinytask-win.exe --version
-tinytask-win.exe task list
+tko-win.exe --version
+tko-win.exe task list
 ```
-
-### Package Configuration
-
-The packaging configuration is defined in [`package.json`](package.json:27):
-- **Entry Point**: `dist/index.js` (built from TypeScript sources)
-- **Targets**: Node.js 18 for Linux x64, macOS x64, Windows x64
-- **Assets**: All JavaScript files in `dist/` are bundled
-- **Output**: `dist/binaries/` directory
 
 ## Configuration
 
