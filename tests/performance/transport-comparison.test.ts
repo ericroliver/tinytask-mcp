@@ -12,8 +12,8 @@ import { Server as HttpServer } from 'http';
 // Test configuration
 const SSE_PORT = 6001;
 const STREAMABLE_PORT = 6002;
-const SSE_URL = `http://localhost:${SSE_PORT}`;
-const STREAMABLE_URL = `http://localhost:${STREAMABLE_PORT}`;
+const SSE_URL = `http://127.0.0.1:${SSE_PORT}`;
+const STREAMABLE_URL = `http://127.0.0.1:${STREAMABLE_PORT}`;
 
 // Performance metrics storage
 interface PerformanceMetrics {
@@ -128,7 +128,7 @@ describe('Transport Performance Comparison', () => {
       sseClient.commentService,
       sseClient.linkService,
       sseClient.queueService,
-      { port: SSE_PORT, host: 'localhost' }
+      { port: SSE_PORT, host: '127.0.0.1' }
     );
 
     // Start Streamable HTTP server
@@ -137,7 +137,7 @@ describe('Transport Performance Comparison', () => {
       streamableClient.commentService,
       streamableClient.linkService,
       streamableClient.queueService,
-      { port: STREAMABLE_PORT, host: 'localhost' }
+      { port: STREAMABLE_PORT, host: '127.0.0.1' }
     );
 
     // Wait for both servers to be ready

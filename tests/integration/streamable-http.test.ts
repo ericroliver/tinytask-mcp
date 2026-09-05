@@ -5,23 +5,27 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { createTestClient, createTestTask, TestClient } from '../helpers/test-client.js';
 import { startStreamableHttpServer } from '../../src/server/streamable-http.js';
+import type { Server as HttpServer } from 'http';
 
 const TEST_PORT = 4001;
-const BASE_URL = `http://localhost:${TEST_PORT}`;
+// Bind and connect via 127.0.0.1: 'localhost' resolves to ::1 (IPv6) on some
+// machines while undici's fetch connects to 127.0.0.1, causing ECONNREFUSED.
+const BASE_URL = `http://127.0.0.1:${TEST_PORT}`;
 
 describe('Streamable HTTP Transport', () => {
   let client: TestClient;
+  let httpServer: HttpServer | undefined;
 
   beforeAll(async () => {
     client = createTestClient();
-    
-    // Start the Streamable HTTP server
-    startStreamableHttpServer(
+
+    // Start the Streamable HTTP server (await so startup errors surface here)
+    httpServer = await startStreamableHttpServer(
       client.taskService,
       client.commentService,
       client.linkService,
         client.queueService,
-      { port: TEST_PORT, host: 'localhost' }
+      { port: TEST_PORT, host: '127.0.0.1' }
     );
 
     // Give server time to start
@@ -30,7 +34,7 @@ describe('Streamable HTTP Transport', () => {
 
   afterAll(() => {
     client.cleanup();
-    // Server will be cleaned up by process exit
+    httpServer?.close();
   });
 
   describe('Server Initialization', () => {

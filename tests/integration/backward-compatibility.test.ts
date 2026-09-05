@@ -62,14 +62,14 @@ describe('Backward Compatibility', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
       servers.push(server);
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Verify SSE transport is active
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
       expect(response.ok).toBe(true);
       
       const health = await response.json();
@@ -88,13 +88,13 @@ describe('Backward Compatibility', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
       servers.push(server);
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
       expect(response.ok).toBe(true);
       
       const health = await response.json();
@@ -113,13 +113,13 @@ describe('Backward Compatibility', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
       servers.push(server);
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
       expect(response.ok).toBe(true);
       
       const health = await response.json();
@@ -149,7 +149,7 @@ describe('Backward Compatibility', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
       servers.push(server);
 
@@ -246,7 +246,7 @@ describe('Backward Compatibility', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
       servers.push(server);
 
@@ -559,12 +559,12 @@ describe('Backward Compatibility', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
       const health = await response.json();
 
       expect(health.status).toBe('healthy');
@@ -580,12 +580,12 @@ describe('Backward Compatibility', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
       const health = await response.json();
 
       expect(health.status).toBe('healthy');
