@@ -144,7 +144,8 @@ Two ways to produce the Windows executable:
 
 - **Native (recommended, on a Windows machine):** the running `node.exe` is a
   win-x64 Node binary, so it is used directly — no download needed. Or simply
-  run `./deploy-windows.sh` (Git Bash) to build and install to
+  run `./deploy-windows.sh` (Git Bash) or `.\deploy-windows.ps1` (PowerShell,
+  works in Windows PowerShell 5.1 and PowerShell 7+) to build and install to
   `~/.local/bin/tinytask.exe`.
 - **Cross-compiled (from Linux/macOS):** `scripts/sea-windows.mjs` downloads
   the official `node-v20.19.2-win-x64.zip` and extracts `node.exe`
@@ -445,6 +446,7 @@ The tinytask-cli directory ships per-platform "build + install locally" scripts:
 | `deploy-linux.sh`     | Linux                      | Build `dist/tko-linux` → install to `~/.local/bin/tinytask` |
 | `deploy-macos.sh`     | macOS                      | Build `dist/tko-macos` → install to `~/.local/bin/tinytask` |
 | `deploy-windows.sh`   | Windows (Git Bash)         | Build `dist/tko-win.exe` → install to `~/.local/bin/tinytask.exe` |
+| `deploy-windows.ps1`  | Windows (PowerShell)       | PowerShell counterpart of `deploy-windows.sh` — same build + install |
 | `deploy.sh`           | m1x-remote (Linux ARM64)   | Build all architectures on build hosts + deploy across the network |
 
 ## Distribution Checklist

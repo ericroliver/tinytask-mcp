@@ -8,7 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.5.1] - 2026-09-05
 
 ### Added
-- Windows build + install support: `deploy-windows.sh` (run from Git Bash on Windows) builds `dist/tko-win.exe` and installs to `~/.local/bin/tinytask.exe`
+- Windows build + install support: `deploy-windows.sh` (Git Bash) and `deploy-windows.ps1` (PowerShell, works in Windows PowerShell 5.1 and PowerShell 7+) — both build `dist/tko-win.exe` and install to `~/.local/bin/tinytask.exe`
 - `sea:windows` now builds natively on Windows (uses the local `node.exe` — no download) and gained a PowerShell extraction fallback for cross-builds from Linux/macOS
 
 ### Changed
