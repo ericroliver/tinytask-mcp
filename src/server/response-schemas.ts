@@ -28,6 +28,7 @@ export const ParsedTaskSchema = z.object({
   auto_promote: z.boolean().describe("Whether the task's status auto-updates from its children (default: true)"),
   created_at: z.string().describe('ISO timestamp of creation'),
   updated_at: z.string().describe('ISO timestamp of last update'),
+  completed_at: z.string().nullable().describe('ISO timestamp of completion, null if not complete'),
   archived_at: z.string().nullable().describe('ISO timestamp of archival, null if not archived'),
 });
 
@@ -92,6 +93,18 @@ export const TaskListSchema = z.array(TaskListItemSchema);
 export const CommentListSchema = z.array(CommentDataSchema);
 export const LinkListSchema = z.array(LinkDataSchema);
 export const StringListSchema = z.array(z.string());
+
+export const TaskHistoryEntrySchema = z.object({
+  id: z.number().describe('History entry identifier'),
+  task_id: z.number().describe('Task this entry belongs to'),
+  field_name: z.string().describe('Field that changed'),
+  old_value: z.string().nullable().describe('Previous value, null if unset'),
+  new_value: z.string().nullable().describe('New value, null if unset'),
+  changed_by: z.string().nullable().describe('Agent that made the change, null if unknown or system-internal without actor'),
+  changed_at: z.string().describe('ISO timestamp of the change'),
+});
+
+export const TaskHistoryListSchema = z.array(TaskHistoryEntrySchema);
 
 export const DeletedResponseSchema = z.object({
   success: z.boolean().describe('Whether the deletion succeeded'),

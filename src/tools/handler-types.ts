@@ -26,10 +26,15 @@ export interface UpdateTaskParams {
   parent_task_id?: number;
   queue_name?: string;
   auto_promote?: boolean;
+  updated_by?: string;
 }
 
 export interface GetTaskParams {
   id: number;
+}
+
+export interface GetTaskHistoryParams {
+  task_id: number;
 }
 
 export interface DeleteTaskParams {

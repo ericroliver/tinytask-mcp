@@ -26,7 +26,7 @@ TinyTask is a task management system for LLM agent collaboration, exposed as an 
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `id` | string (auto) | Yes | Unique ID (`YYYYMMDD_NN`) |
+| `id` | integer (auto) | Yes | Unique ID (sequential integer, e.g. `892`) |
 | `title` | string | Yes | Short summary, <80 chars, action verb prefix |
 | `description` | string | Yes | What, why, acceptance criteria |
 | `status` | enum | Yes | `idle` \| `working` \| `complete` |

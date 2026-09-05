@@ -5,6 +5,7 @@ import { createTaskUpdateCommand } from './update.js';
 import { createTaskDeleteCommand } from './delete.js';
 import { createTaskListCommand } from './list.js';
 import { createTaskArchiveCommand } from './archive.js';
+import { createTaskHistoryCommand } from './history.js';
 
 export function createTaskCommands(program: Command): void {
   const task = program.command('task').alias('t').description('Task operations');
@@ -15,4 +16,5 @@ export function createTaskCommands(program: Command): void {
   createTaskDeleteCommand(task);
   createTaskListCommand(task);
   createTaskArchiveCommand(task);
+  createTaskHistoryCommand(task);
 }

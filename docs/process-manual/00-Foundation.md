@@ -132,7 +132,7 @@ Every task has an immutable **history** log. Each change to a task (status chang
 
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `id` | string (auto) | Yes | Unique task identifier (format: `YYYYMMDD_NN`) |
+| `id` | integer (auto) | Yes | Unique task identifier (sequential integer, e.g. `892`) |
 | `title` | string | Yes | Short summary of the work |
 | `description` | string | Yes | Detailed description of the task |
 | `status` | enum | Yes | `idle`, `working`, or `complete` |

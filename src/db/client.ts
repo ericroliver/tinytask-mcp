@@ -93,6 +93,13 @@ export class DatabaseClient {
       `);
     }
 
+    // Migration: Add completed_at column if it doesn't exist (completion timestamp)
+    if (!this.columnExists('tasks', 'completed_at')) {
+      this.db.exec(`
+        ALTER TABLE tasks ADD COLUMN completed_at DATETIME;
+      `);
+    }
+
     // Migration: Add blocked_by_task_id column if it doesn't exist
     // Since SQLite doesn't support adding FOREIGN KEY constraints to existing tables,
     // we need to rebuild the table if the column doesn't exist

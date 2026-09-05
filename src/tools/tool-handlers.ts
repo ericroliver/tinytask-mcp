@@ -12,6 +12,7 @@ import {
   createTaskHandler,
   updateTaskHandler,
   getTaskHandler,
+  getTaskHistoryHandler,
   deleteTaskHandler,
   archiveTaskHandler,
   listTasksHandler,
@@ -50,6 +51,7 @@ import type {
   CreateTaskParams,
   UpdateTaskParams,
   GetTaskParams,
+  GetTaskHistoryParams,
   DeleteTaskParams,
   ArchiveTaskParams,
   ListTasksParams,
@@ -135,6 +137,9 @@ export function registerToolHandlers(
           break;
         case 'get_task':
           result = await getTaskHandler(taskService, validatedArgs as GetTaskParams);
+          break;
+        case 'get_task_history':
+          result = await getTaskHistoryHandler(taskService, validatedArgs as GetTaskHistoryParams);
           break;
         case 'delete_task':
           result = await deleteTaskHandler(taskService, validatedArgs as DeleteTaskParams);

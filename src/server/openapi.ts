@@ -16,6 +16,7 @@ import {
   TaskWithSubtasksSchema,
   QueueStatsSchema,
   TaskListSchema,
+  TaskHistoryListSchema,
   CommentListSchema,
   LinkListSchema,
   StringListSchema,
@@ -138,6 +139,7 @@ function buildComponentSchemas(): Record<string, JsonSchema> {
     TaskWithSubtasks: zodToJsonSchema(TaskWithSubtasksSchema),
     QueueStats: zodToJsonSchema(QueueStatsSchema),
     TaskList: zodToJsonSchema(TaskListSchema),
+    TaskHistoryList: zodToJsonSchema(TaskHistoryListSchema),
     CommentList: zodToJsonSchema(CommentListSchema),
     LinkList: zodToJsonSchema(LinkListSchema),
     StringList: zodToJsonSchema(StringListSchema),
@@ -281,6 +283,8 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
             parent_task_id: z.number().optional(),
             queue_name: z.string().optional(),
             blocked_by_task_id: z.number().nullable().optional(),
+            auto_promote: z.boolean().optional(),
+            updated_by: z.string().optional(),
           })
         ),
         responses: {
@@ -299,6 +303,24 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         ],
         responses: {
           '200': jsonResponse('DeletedResponse'),
+          '400': errorResponse(),
+          '404': errorResponse('Task not found'),
+        },
+      },
+    },
+
+    '/api/v1/tasks/{id}/history': {
+      get: {
+        summary: 'Get task history',
+        description:
+          'Get the audit-trail history for a task: chronological log of field changes with old/new values, acting agent, and timestamps. Maps to MCP tool: get_task_history.',
+        operationId: 'getTaskHistory',
+        tags: ['Tasks'],
+        parameters: [
+          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Task ID' },
+        ],
+        responses: {
+          '200': jsonResponse('TaskHistoryList'),
           '400': errorResponse(),
           '404': errorResponse('Task not found'),
         },

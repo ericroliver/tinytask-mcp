@@ -15,8 +15,14 @@ import {
   Comment,
   CommentData,
   Link,
+  TaskHistory,
 } from '../types/index.js';
 import { toISO8601 } from '../utils/timestamp.js';
+import {
+  recordTaskHistory,
+  getTaskHistory,
+  HistoryChange,
+} from './task-history.js';
 import { EventBus } from '../events/event-bus.js';
 import { TaskEventType, createEvent, extractTaskContext } from '../events/event-types.js';
 import type { TaskContext } from '../events/event-types.js';
@@ -114,6 +120,14 @@ export class TaskService {
       }
 
       const parsedTask = this.parseTask(task);
+
+      // Audit trail: creation is the first history entry for the task
+      recordTaskHistory(
+        this.db,
+        task.id,
+        [{ field_name: 'created', old_value: null, new_value: status }],
+        params.created_by || null
+      );
 
       // If this is a subtask, update parent status
       if (params.parent_task_id != null) {
@@ -258,6 +272,12 @@ export class TaskService {
       if (updates.status !== undefined) {
         fields.push('status = ?');
         values.push(updates.status);
+        // Completion timestamp: set when entering 'complete', cleared on reopen
+        if (updates.status === 'complete' && existing.status !== 'complete') {
+          fields.push('completed_at = CURRENT_TIMESTAMP');
+        } else if (updates.status !== 'complete' && existing.status === 'complete') {
+          fields.push('completed_at = NULL');
+        }
       }
 
       if (updates.assigned_to !== undefined) {
@@ -316,6 +336,47 @@ export class TaskService {
       values.push(id);
 
       this.db.execute(`UPDATE tasks SET ${fields.join(', ')} WHERE id = ?`, values);
+
+      // Audit trail: record what changed (old -> new) and who changed it.
+      // Mirrors the normalizations used when building the UPDATE above; unchanged
+      // fields are not recorded.
+      const historyChanges: HistoryChange[] = [];
+      const diffField = (fieldName: string, oldValue: unknown, newValue: unknown): void => {
+        const oldStr = oldValue === undefined || oldValue === null ? null : String(oldValue);
+        const newStr = newValue === undefined || newValue === null ? null : String(newValue);
+        if (oldStr !== newStr) {
+          historyChanges.push({ field_name: fieldName, old_value: oldStr, new_value: newStr });
+        }
+      };
+
+      if (updates.title !== undefined) diffField('title', existing.title, updates.title.trim());
+      if (updates.description !== undefined) {
+        diffField('description', existing.description, updates.description || null);
+      }
+      if (updates.status !== undefined) diffField('status', existing.status, updates.status);
+      if (updates.assigned_to !== undefined) {
+        diffField('assigned_to', existing.assigned_to, updates.assigned_to || null);
+      }
+      if (updates.priority !== undefined) {
+        diffField('priority', existing.priority, updates.priority);
+      }
+      if (updates.tags !== undefined) {
+        diffField('tags', existing.tags ? JSON.stringify(existing.tags) : null, updates.tags ? JSON.stringify(updates.tags) : null);
+      }
+      if (updates.parent_task_id !== undefined) {
+        diffField('parent_task_id', existing.parent_task_id, updates.parent_task_id);
+      }
+      if (updates.queue_name !== undefined) {
+        diffField('queue_name', existing.queue_name, updates.queue_name);
+      }
+      if (updates.blocked_by_task_id !== undefined) {
+        diffField('blocked_by_task_id', existing.blocked_by_task_id, updates.blocked_by_task_id);
+      }
+      if (updates.auto_promote !== undefined) {
+        diffField('auto_promote', existing.auto_promote, updates.auto_promote);
+      }
+
+      recordTaskHistory(this.db, id, historyChanges, updates.updated_by?.trim() || null);
 
       const updated = this.get(id);
       if (!updated) {
@@ -528,6 +589,20 @@ export class TaskService {
         throw new Error('Failed to retrieve archived task');
       }
 
+      // Audit trail: archive is a task change too
+      recordTaskHistory(
+        this.db,
+        id,
+        [
+          {
+            field_name: 'archived_at',
+            old_value: null,
+            new_value: String(archivedTask.archived_at),
+          },
+        ],
+        null
+      );
+
       // Update parent status if task had a parent
       if (existing.parent_task_id != null) {
         this.updateParentStatus(existing.parent_task_id);
@@ -538,6 +613,18 @@ export class TaskService {
 
     this.emit(TaskEventType.TaskArchived, { taskId: id, task: archived, ...extractTaskContext(archived) });
     return archived;
+  }
+
+  /**
+   * Get the audit-trail history for a task (chronological, oldest first).
+   * Each entry captures which field changed, its old/new values, the acting
+   * agent (when known) and when the change happened.
+   */
+  getHistory(taskId: number): TaskHistory[] {
+    if (!this.get(taskId)) {
+      throw new Error(`Task not found: ${taskId}`);
+    }
+    return getTaskHistory(this.db, taskId);
   }
 
   /**
@@ -632,6 +719,16 @@ export class TaskService {
          WHERE id = ?`,
         [newAgent, currentAgent, taskId]
       );
+
+      // Audit trail: transfer records the assignee change (and status reset when
+      // the task was working) with the transferring agent as the actor
+      const transferChanges: HistoryChange[] = [
+        { field_name: 'assigned_to', old_value: task.assigned_to, new_value: newAgent },
+      ];
+      if (task.status !== 'idle') {
+        transferChanges.push({ field_name: 'status', old_value: task.status, new_value: 'idle' });
+      }
+      recordTaskHistory(this.db, taskId, transferChanges, currentAgent);
 
       // Update parent status if task is a subtask (status changed to idle)
       if (task.parent_task_id != null) {
@@ -899,6 +996,7 @@ export class TaskService {
       auto_promote: task.auto_promote !== 0,
       created_at: toISO8601(task.created_at),
       updated_at: toISO8601(task.updated_at),
+      completed_at: task.completed_at ? toISO8601(task.completed_at) : null,
       archived_at: task.archived_at ? toISO8601(task.archived_at) : null,
     };
   }
@@ -954,6 +1052,7 @@ export class TaskService {
     // Route the promotion through update() so it is auditable: updated_at is
     // refreshed, TaskUpdated/TaskStatusChanged events are emitted, and the
     // grandparent is updated recursively when this status change lands.
-    this.update(parentId, { status: newStatus });
+    // updated_by 'system' marks it as machine-driven in task_history.
+    this.update(parentId, { status: newStatus, updated_by: 'system' });
   }
 }
