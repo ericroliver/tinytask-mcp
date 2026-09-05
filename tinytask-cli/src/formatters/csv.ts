@@ -24,12 +24,34 @@ export class CSVFormatter implements Formatter {
     ) {
       // Extract comments array from structured response
       items = (data as Record<string, unknown>).comments as unknown[];
+    } else if (
+      typeof data === 'object' &&
+      data !== null &&
+      'queues' in data &&
+      Array.isArray((data as Record<string, unknown>).queues)
+    ) {
+      // Extract queue names array from list_queues response
+      items = (data as Record<string, unknown>).queues as unknown[];
+    } else if (
+      typeof data === 'object' &&
+      data !== null &&
+      'agent' in data &&
+      'tasks' in data &&
+      Array.isArray((data as Record<string, unknown>).tasks)
+    ) {
+      // Extract tasks array from queue view response
+      items = (data as Record<string, unknown>).tasks as unknown[];
     } else {
       items = [data];
     }
 
     if (items.length === 0) {
       return '';
+    }
+
+    // Single-column output for lists of primitives (e.g. queue names)
+    if (typeof items[0] !== 'object' || items[0] === null) {
+      return ['name', ...items.map((item) => this.formatValue(item))].join('\n');
     }
 
     // Get headers from first object

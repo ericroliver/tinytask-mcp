@@ -40,7 +40,9 @@ describe('TableFormatter', () => {
     const formatter = new TableFormatter({ color: false, verbose: false });
     const output = formatter.formatTasks([longTask]);
 
-    expect(output).toContain('...');
+    // cli-table3 truncates overflowing cells with '…'; formatter-level truncation uses '...'
+    expect(output).toMatch(/…|\.\.\./);
+    expect(output).not.toContain('A'.repeat(100));
   });
 
   it('should format single task with details', () => {

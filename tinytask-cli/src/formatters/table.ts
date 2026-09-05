@@ -214,6 +214,42 @@ export class TableFormatter implements Formatter {
     return lines.join('\n');
   }
 
+  formatQueueList(queueData: Record<string, unknown>): string {
+    const { count, queues } = queueData;
+    const queueCount =
+      typeof count === 'number' ? count : Array.isArray(queues) ? queues.length : 0;
+
+    const lines = [];
+    lines.push(this.options.color ? chalk.cyan.bold('Queues') : 'Queues');
+    lines.push(
+      this.options.color
+        ? chalk.gray(`${queueCount} queue${queueCount !== 1 ? 's' : ''}`)
+        : `${queueCount} queue${queueCount !== 1 ? 's' : ''}`
+    );
+    lines.push('');
+
+    if (!Array.isArray(queues) || queues.length === 0) {
+      const msg = 'No queues found';
+      return lines.join('\n') + '\n' + (this.options.color ? chalk.yellow(msg) : msg);
+    }
+
+    const table = new Table({
+      head: this.formatHeader(['Queue']),
+      style: {
+        head: [],
+        border: this.options.color ? ['gray'] : [],
+      },
+      wordWrap: true,
+    });
+
+    queues.forEach((queue) => {
+      table.push([String(queue)]);
+    });
+
+    lines.push(table.toString());
+    return lines.join('\n');
+  }
+
   formatComments(commentData: Record<string, unknown>): string {
     const { task_id, count, comments } = commentData;
 
@@ -425,6 +461,8 @@ export class TableFormatter implements Formatter {
       return this.formatTasks(data);
     } else if (typeof data === 'object' && data !== null && 'agent' in data && 'tasks' in data) {
       return this.formatQueue(data as Record<string, unknown>);
+    } else if (typeof data === 'object' && data !== null && 'queues' in data) {
+      return this.formatQueueList(data as Record<string, unknown>);
     } else if (
       typeof data === 'object' &&
       data !== null &&

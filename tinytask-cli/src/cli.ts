@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import chalk from 'chalk';
 import { version } from './version.js';
 import { createConfigCommands } from './commands/config.js';
 import { createTaskCommands } from './commands/task/index.js';
@@ -8,6 +9,8 @@ import { createSignupCommand } from './commands/signup.js';
 import { createMoveCommand } from './commands/move.js';
 import { createCommentCommands } from './commands/comment.js';
 import { createLinkCommands } from './commands/link.js';
+import { ensureConnected } from './client/connection.js';
+import { loadConfig } from './config/loader.js';
 
 export function createCLI(): Command {
   const program = new Command();
@@ -43,12 +46,34 @@ export function createCLI(): Command {
   createCommentCommands(program);
   createLinkCommands(program);
 
-  // Placeholder command for testing
+  // Connectivity check
   program
     .command('ping')
-    .description('Test CLI installation')
-    .action(() => {
-      console.log('TinyTask CLI is working!');
+    .description('Check connectivity to the TinyTask server')
+    .action(async (_options, command) => {
+      try {
+        const config = await loadConfig({ url: command.optsWithGlobals().url });
+
+        if (!config.url) {
+          console.error(
+            chalk.red('Error: No server URL configured. Use --url or configure a profile.')
+          );
+          process.exit(1);
+        }
+
+        const startedAt = Date.now();
+        const client = await ensureConnected(config.url);
+        await client.listQueues();
+        const latencyMs = Date.now() - startedAt;
+
+        console.log(chalk.green(`✓ TinyTask server reachable at ${config.url} (${latencyMs}ms)`));
+      } catch (error) {
+        console.error(
+          chalk.red('✗ TinyTask server unreachable:'),
+          error instanceof Error ? error.message : String(error)
+        );
+        process.exit(1);
+      }
     });
 
   return program;

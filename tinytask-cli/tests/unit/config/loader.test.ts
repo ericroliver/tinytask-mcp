@@ -67,6 +67,7 @@ describe('Configuration Loader', () => {
   });
 
   it('should fall back to TINYTASK_AGENT when TKO_AGENT is not set', async () => {
+    delete process.env.TKO_AGENT;
     process.env.TINYTASK_AGENT = 'legacy-agent';
 
     const config = await loadConfig({});
