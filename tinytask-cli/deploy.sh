@@ -106,10 +106,10 @@ build_linux_arm64() {
   cd /enigma-home/repos/tinytask/tinytask-cli
   npm ci 2>&1 | tail -1
   npm run sea:linux 2>&1 | tail -3
-  chmod +x dist/tinytask-linux
+  chmod +x dist/tko-linux
 
   # Verify
-  ./dist/tinytask-linux --version
+  ./dist/tko-linux --version
 
   ok "Linux ARM64 binary built locally"
 }
@@ -128,8 +128,8 @@ build_linux_x86() {
     cd '$repo_path'
     git fetch origin && git checkout '$BRANCH' && git pull origin '$BRANCH'
     cd '$CLI_DIR'
-    docker run --rm --platform linux/amd64 -v \$(pwd):/app -w /app node:20-slim sh -c 'npm ci && npm run sea:linux && chmod +x dist/tinytask-linux'
-    ./dist/tinytask-linux --version
+    docker run --rm --platform linux/amd64 -v \$(pwd):/app -w /app node:20-slim sh -c 'npm ci && npm run sea:linux && chmod +x dist/tko-linux'
+    ./dist/tko-linux --version
   " 2>&1 | grep -v "^From " | grep -v "^Already on " | grep -v "^Your branch"
 
   ok "Linux x86_64 binary built on $host"
@@ -153,8 +153,8 @@ build_macos() {
     cd '$CLI_DIR'
     npm ci
     npm run sea:macos
-    chmod +x dist/tinytask-macos
-    ./dist/tinytask-macos --version
+    chmod +x dist/tko-macos
+    ./dist/tko-macos --version
   " 2>&1 | grep -v "^From " | grep -v "^Already on " | grep -v "^Your branch"
 
   ok "macOS ARM64 binary built on $host"
@@ -163,7 +163,7 @@ build_macos() {
 # ── Deploy: Linux ARM64 (local) ─────────────────────────────────────────────
 deploy_local() {
   log "Deploying to localhost (m1x-remote Docker)..."
-  cp /enigma-home/repos/tinytask/tinytask-cli/dist/tinytask-linux "$LINUX_ARM64_LOCAL"
+  cp /enigma-home/repos/tinytask/tinytask-cli/dist/tko-linux "$LINUX_ARM64_LOCAL"
   chmod +x "$LINUX_ARM64_LOCAL"
   local version
   version=$(tinytask --version 2>/dev/null)
@@ -176,8 +176,8 @@ deploy_linux_x86() {
   local repo_path="\$HOME/config/tinytask/tinytask-mcp"
 
   # Pull the binary from blue-remote to local temp
-  local tmpfile="/tmp/tinytask-linux-x86-$$"
-  remote "$build_host" "cat '$repo_path/$CLI_DIR/dist/tinytask-linux'" > "$tmpfile" 2>/dev/null
+  local tmpfile="/tmp/tko-linux-x86-$$"
+  remote "$build_host" "cat '$repo_path/$CLI_DIR/dist/tko-linux'" > "$tmpfile" 2>/dev/null
 
   for host in "${LINUX_X86_MACHINES[@]}"; do
     log "Deploying to $host..."
@@ -189,7 +189,7 @@ deploy_linux_x86() {
 
     if [[ "$host" == "$build_host" ]]; then
       # Same machine — copy locally on the remote
-      remote "$host" "cp '$repo_path/$CLI_DIR/dist/tinytask-linux' ~/.local/bin/tinytask && chmod +x ~/.local/bin/tinytask"
+      remote "$host" "cp '$repo_path/$CLI_DIR/dist/tko-linux' ~/.local/bin/tinytask && chmod +x ~/.local/bin/tinytask"
     else
       # Upload from local temp to target
       remote_scp "$tmpfile" "$host" "~/.local/bin/tinytask"
@@ -218,10 +218,10 @@ deploy_macos() {
 
     if [[ "$host" == "$build_host" ]]; then
       # Same machine — copy locally on the remote
-      remote "$host" "cp '$repo_path/$CLI_DIR/dist/tinytask-macos' ~/.local/bin/tinytask && chmod +x ~/.local/bin/tinytask"
+      remote "$host" "cp '$repo_path/$CLI_DIR/dist/tko-macos' ~/.local/bin/tinytask && chmod +x ~/.local/bin/tinytask"
     else
       # SCP from build host to target host (both on Tailscale)
-      remote "$build_host" "scp -o StrictHostKeyChecking=accept-new '$repo_path/$CLI_DIR/dist/tinytask-macos' 'eo@$host:~/.local/bin/tinytask'"
+      remote "$build_host" "scp -o StrictHostKeyChecking=accept-new '$repo_path/$CLI_DIR/dist/tko-macos' 'eo@$host:~/.local/bin/tinytask'"
     fi
 
     local version

@@ -1,6 +1,6 @@
 
 
-npm run build 
-npm run package
-cp dist/tinytask-macos $HOME/.local/bin/tinytask
+npm run build
+npm run package-mac
+cp dist/tko-macos $HOME/.local/bin/tinytask
 tinytask --version

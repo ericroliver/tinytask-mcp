@@ -5,6 +5,16 @@ All notable changes to TinyTask MCP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.1] - 2026-09-05
+
+### Changed
+- CLI 0.5.1 build/packaging: SEA build outputs renamed to `tko-*` (`dist/tko-macos`,
+  `dist/tko-linux`, `dist/tko-win.exe`); new Windows build + install support
+  (`deploy-windows.sh`, `sea:windows` now uses the local `node.exe` when run on
+  Windows and gained a PowerShell extraction fallback for cross-builds); fixed
+  `deploy-macos.sh` calling the non-existent `npm run package` script. The installed
+  command name (`tinytask`) is unchanged.
+
 ## [2.2.0] - 2026-09-05
 
 ### Added
