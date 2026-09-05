@@ -234,7 +234,7 @@ SQLite Database: tinytask.db
 │   ├── PK: id
 │   ├── FK: task_id → tasks(id) ON DELETE CASCADE
 │   └── Index: task_id
-└── task_history (optional audit trail)
+└── task_history (audit trail, populated on all mutations)
     ├── PK: id
     ├── FK: task_id → tasks(id) ON DELETE CASCADE
     └── Index: task_id

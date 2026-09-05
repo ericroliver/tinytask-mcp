@@ -22,6 +22,7 @@ export interface ParsedTask {
   auto_promote: boolean;
   created_at: string;
   updated_at: string;
+  completed_at: string | null;
   archived_at: string | null;
 }
 
@@ -80,6 +81,7 @@ export interface UpdateTaskParams {
   queue_name?: string;
   blocked_by_task_id?: number | null;
   auto_promote?: boolean;
+  updated_by?: string;
 }
 
 export interface TaskFilters {

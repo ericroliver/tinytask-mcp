@@ -24,6 +24,7 @@ CREATE TABLE tasks (
     blocked_by_task_id INTEGER,  -- For task blocking relationships
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    completed_at DATETIME,  -- Set when status becomes 'complete'; cleared on reopen
     archived_at DATETIME,
     FOREIGN KEY (parent_task_id) REFERENCES tasks(id) ON DELETE CASCADE,
     FOREIGN KEY (blocked_by_task_id) REFERENCES tasks(id) ON DELETE SET NULL
@@ -48,6 +49,7 @@ CREATE INDEX idx_tasks_blocked_by ON tasks(blocked_by_task_id);
 - Compound index on `(assigned_to, status)` for efficient queue queries
 - `parent_task_id` enables hierarchical task organization with CASCADE delete
 - `queue_name` allows flexible queue-based task organization
+- `completed_at` records when a task transitioned to `complete` (null otherwise; cleared on reopen; inherited through automatic parent promotion)
 - `blocked_by_task_id` enables task blocking with SET NULL on delete (preserves blocked task if blocker is deleted)
 - Maximum nesting depth of 4 levels enforced at application layer
 - Indexes on `parent_task_id`, `queue_name`, and `blocked_by_task_id` for efficient queries
@@ -97,8 +99,12 @@ CREATE INDEX idx_links_task_id ON links(task_id);
 - `description` provides context about the artifact
 - CASCADE delete for cleanup
 
-### task_history (Optional - for audit trail)
-Tracks significant task state changes.
+### task_history (Audit trail)
+Tracks significant task state changes. Populated on every mutation path since v2.2.0:
+creation, field updates (status, assignee, queue, priority, tags, parent, blocked-by,
+auto_promote), agent transfers, archive, and automatic parent promotion (actor `system`).
+Read via `GET /api/v1/tasks/{id}/history` (REST) or the `get_task_history` MCP tool
+(CLI: `tinytask task history <id>`).
 
 ```sql
 CREATE TABLE task_history (
@@ -117,6 +123,8 @@ CREATE INDEX idx_history_task_id ON task_history(task_id);
 
 **Key Design Decisions:**
 - Captures who changed what and when
+- `changed_by` records the acting agent: `created_by` on creation, `updated_by` on updates, transferring agent on moves, `system` for auto-promotion
+- Rows are written in the same transaction as the mutation they describe
 - Useful for debugging agent workflows
 - Can be disabled if not needed
 

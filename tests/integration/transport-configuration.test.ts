@@ -44,14 +44,14 @@ describe('Transport Configuration', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
 
       // Give server time to start
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Verify SSE transport by checking health endpoint
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
       const health = await response.json();
 
       // SSE health endpoint doesn't include 'transport' field (legacy)
@@ -72,13 +72,13 @@ describe('Transport Configuration', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Verify Streamable HTTP transport
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
       const health = await response.json();
 
       expect(health.status).toBe('healthy');
@@ -96,13 +96,13 @@ describe('Transport Configuration', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Verify Streamable HTTP transport (default)
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
       const health = await response.json();
 
       expect(health.status).toBe('healthy');
@@ -138,13 +138,13 @@ describe('Transport Configuration', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Verify SSE transport is active
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
       const health = await response.json();
 
       expect(health.status).toBe('healthy');
@@ -162,13 +162,13 @@ describe('Transport Configuration', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Verify Streamable HTTP transport
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
       const health = await response.json();
 
       expect(health.status).toBe('healthy');
@@ -186,13 +186,13 @@ describe('Transport Configuration', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Verify Streamable HTTP transport is used for HTTP portion
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
       const health = await response.json();
 
       expect(health.status).toBe('healthy');
@@ -209,13 +209,13 @@ describe('Transport Configuration', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
       // Verify SSE transport is used
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
       const health = await response.json();
 
       expect(health.status).toBe('healthy');
@@ -234,7 +234,7 @@ describe('Transport Configuration', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
 
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -262,7 +262,7 @@ describe('Transport Configuration', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
 
       await new Promise(resolve => setTimeout(resolve, 500));
@@ -294,12 +294,12 @@ describe('Transport Configuration', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
       const health = await response.json();
 
       expect(health.status).toBe('healthy');
@@ -317,12 +317,12 @@ describe('Transport Configuration', () => {
         client.commentService,
         client.linkService,
         client.queueService,
-        { port, host: 'localhost' }
+        { port, host: '127.0.0.1' }
       );
 
       await new Promise(resolve => setTimeout(resolve, 500));
 
-      const response = await fetch(`http://localhost:${port}/health`);
+      const response = await fetch(`http://127.0.0.1:${port}/health`);
       const health = await response.json();
 
       expect(health.status).toBe('healthy');

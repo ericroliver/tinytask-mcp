@@ -262,6 +262,15 @@ export class TinyTaskClient {
     return this.parseResult(result);
   }
 
+  async getTaskHistory(taskId: number): Promise<unknown> {
+    this.ensureConnected();
+    const result = await this.client.callTool({
+      name: 'get_task_history',
+      arguments: { task_id: taskId },
+    });
+    return this.parseResult(result);
+  }
+
   async updateComment(id: number, content: string): Promise<unknown> {
     this.ensureConnected();
     const result = await this.client.callTool({

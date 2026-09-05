@@ -134,6 +134,11 @@ function validateTaskBodyFields(body: Record<string, unknown>, isPatch: boolean)
     return 'auto_promote must be a boolean';
   }
 
+  // updated_by: must be a string if provided (actor recorded in task history)
+  if (body.updated_by !== undefined && body.updated_by !== null && !isString(body.updated_by)) {
+    return 'updated_by must be a string';
+  }
+
   // description: must be a string if provided
   if (body.description !== undefined && body.description !== null && !isString(body.description)) {
     return 'description must be a string';
@@ -306,9 +311,28 @@ export function createRestRouter(
     }
   });
 
-  // PATCH /api/v1/tasks/:id — update_task
-  router.patch('/tasks/:id', (req: Request, res: Response) => {
+  // GET /api/v1/tasks/:id/history — audit trail for a task (chronological, oldest first)
+  router.get('/tasks/:id/history', (req: Request, res: Response) => {
     try {
+      const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        res.status(400).json({ error: `Invalid task ID: ${req.params.id}` });
+        return;
+      }
+      const history = taskService.getHistory(id);
+      res.json(history);
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.includes('not found')) {
+        res.status(404).json({ error: msg });
+      } else {
+        res.status(400).json({ error: msg });
+      }
+    }
+  });
+
+  // PATCH /api/v1/tasks/:id — update_task
+  router.patch('/tasks/:id', (req: Request, res: Response) => {    try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) {
         res.status(400).json({ error: `Invalid task ID: ${req.params.id}` });
@@ -333,6 +357,7 @@ export function createRestRouter(
         queue_name: req.body.queue_name,
         blocked_by_task_id: req.body.blocked_by_task_id,
         auto_promote: req.body.auto_promote,
+        updated_by: req.body.updated_by,
       });
       res.json(task);
     } catch (e) {

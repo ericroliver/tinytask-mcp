@@ -245,6 +245,7 @@ export async function updateTaskHandler(
     queue_name?: string;
     blocked_by_task_id?: number | null;
     auto_promote?: boolean;
+    updated_by?: string;
   }
 ) {
   try {
@@ -264,6 +265,30 @@ export async function updateTaskHandler(
         {
           type: 'text' as const,
           text: `Error updating task: ${error instanceof Error ? error.message : String(error)}`,
+        },
+      ],
+      isError: true,
+    };
+  }
+}
+
+export async function getTaskHistoryHandler(taskService: TaskService, params: { task_id: number }) {
+  try {
+    const history = taskService.getHistory(params.task_id);
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: JSON.stringify(history, null, 2),
+        },
+      ],
+    };
+  } catch (error) {
+    return {
+      content: [
+        {
+          type: 'text' as const,
+          text: `Error getting task history: ${error instanceof Error ? error.message : String(error)}`,
         },
       ],
       isError: true,

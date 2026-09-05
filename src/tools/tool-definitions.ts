@@ -35,10 +35,15 @@ export const toolSchemas = {
     queue_name: z.string().optional().describe('New queue name'),
     blocked_by_task_id: z.coerce.number().nullable().optional().describe('ID of task that blocks this task. Set to null to unblock. Task cannot block itself.'),
     auto_promote: z.boolean().optional().describe("Whether this task's status auto-updates from its children's statuses (default: true). Set false to opt out."),
+    updated_by: z.string().optional().describe('Agent making this change, recorded in task history'),
   }).strict(),
 
   get_task: z.object({
     id: z.coerce.number().describe('Task ID'),
+  }).strict(),
+
+  get_task_history: z.object({
+    task_id: z.coerce.number().describe('Task ID to get history for'),
   }).strict(),
 
   delete_task: z.object({
@@ -311,6 +316,11 @@ export const toolDefinitions = [
     name: 'get_task',
     description: 'Get a task by ID with all comments and links',
     inputSchema: zodToJsonSchema(toolSchemas.get_task),
+  },
+  {
+    name: 'get_task_history',
+    description: 'Get the audit-trail history for a task (chronological): field changes with old/new values, acting agent, and timestamps',
+    inputSchema: zodToJsonSchema(toolSchemas.get_task_history),
   },
   {
     name: 'delete_task',

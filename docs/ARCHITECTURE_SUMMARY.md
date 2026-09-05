@@ -63,7 +63,7 @@
 1. **tasks** - Core entity with status, assignment, priority, tags
 2. **comments** - Agent collaboration via comments
 3. **links** - Artifact references (code, docs, etc.)
-4. **task_history** - Optional audit trail
+4. **task_history** - Audit trail, populated on every task mutation (live since v2.2.0)
 
 Key design decisions:
 - Soft delete via `archived_at` timestamp

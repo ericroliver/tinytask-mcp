@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     auto_promote INTEGER NOT NULL DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    completed_at DATETIME,
     archived_at DATETIME,
     FOREIGN KEY (parent_task_id) REFERENCES tasks(id) ON DELETE CASCADE,
     FOREIGN KEY (blocked_by_task_id) REFERENCES tasks(id) ON DELETE SET NULL

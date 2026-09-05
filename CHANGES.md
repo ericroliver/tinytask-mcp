@@ -84,4 +84,4 @@ Parent status is now automatically maintained; manual status updates on parent t
 
 1. **Performance**: For very large task hierarchies (hundreds of children), consider caching or batch updates
 2. **User Control**: May want a flag to disable auto-propagation for specific parent tasks
-3. **Audit Trail**: Consider logging automatic status changes in `task_history` table
+3. **Audit Trail**: Consider logging automatic status changes in `task_history` table — **Done in v2.2.0**: every mutation (including automatic promotions) is now logged to `task_history`

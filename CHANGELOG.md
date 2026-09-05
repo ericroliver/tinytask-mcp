@@ -5,8 +5,30 @@ All notable changes to TinyTask MCP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0] - 2026-09-05
+## [2.2.0] - 2026-09-05
 
+### Added
+- **Task history audit trail is now live** (previously documented but never populated):
+  every task change — creation, field updates (status, assignee, queue, priority, tags,
+  parent, blocked-by, auto_promote), agent transfers, archive, and queue add/remove/move —
+  is recorded to the `task_history` table with old value, new value, acting agent, and
+  timestamp. Auto-promotion of parent tasks is recorded with actor `system`.
+- `completed_at` task field: set when a task transitions to `complete`, cleared on reopen,
+  null otherwise. Included in task responses (MCP/REST/CLI).
+- `GET /api/v1/tasks/{id}/history` (REST) and `get_task_history` (MCP) to read a task's
+  history (chronological, oldest first).
+- Optional `updated_by` actor on task updates (REST PATCH body / MCP `update_task` /
+  `updated_by` param) recorded as the change author in history.
+- CLI 0.5.0: `task history <id>` command (table or `--json`).
+
+### Fixed
+- 32 long-failing tests on main repaired (no assertions weakened):
+  transport/server suites bound `localhost` which resolves to IPv6 `::1` on lab machines
+  while the test HTTP clients connect to `127.0.0.1` (now bind/connect via `127.0.0.1`);
+  `moveTask` service tests asserted the pre-refactor return shape (now
+  `{ task, comment }`).
+
+## [2.1.0] - 2026-09-05
 ### Changed
 - **Task list responses are much slimmer by default** (token burn fix). `list_tasks` (MCP),
   `GET /api/v1/tasks` and `GET /api/v1/agents/{name}/queue` now:

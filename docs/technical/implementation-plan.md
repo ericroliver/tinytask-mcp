@@ -47,7 +47,7 @@
 1. **tasks** - Core entity with status, assignment, priority
 2. **comments** - Many-to-one with tasks
 3. **links** - Many-to-one with tasks  
-4. **task_history** - Optional audit trail
+4. **task_history** - Audit trail (populated on every task mutation since v2.2.0)
 
 **Key Features:**
 - Foreign key constraints with CASCADE delete

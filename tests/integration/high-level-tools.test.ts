@@ -219,9 +219,9 @@ describe('High-Level Task Tools', () => {
         'Transferring to agent-2'
       );
 
-      expect(result.id).toBe(task.id);
-      expect(result.assigned_to).toBe('agent-2');
-      expect(result.status).toBe('idle');
+      expect(result.task.id).toBe(task.id);
+      expect(result.task.assigned_to).toBe('agent-2');
+      expect(result.task.status).toBe('idle');
     });
 
     test('should successfully transfer task from working status', () => {
@@ -239,9 +239,9 @@ describe('High-Level Task Tools', () => {
         'Transferring to agent-2'
       );
 
-      expect(result.id).toBe(task.id);
-      expect(result.assigned_to).toBe('agent-2');
-      expect(result.status).toBe('idle');
+      expect(result.task.id).toBe(task.id);
+      expect(result.task.assigned_to).toBe('agent-2');
+      expect(result.task.status).toBe('idle');
     });
 
     test('should change status from working to idle', () => {
@@ -259,7 +259,7 @@ describe('High-Level Task Tools', () => {
         'Handoff comment'
       );
 
-      expect(result.status).toBe('idle');
+      expect(result.task.status).toBe('idle');
     });
 
     test('should keep status as idle when transferring idle task', () => {
@@ -277,7 +277,7 @@ describe('High-Level Task Tools', () => {
         'Handoff comment'
       );
 
-      expect(result.status).toBe('idle');
+      expect(result.task.status).toBe('idle');
     });
 
     test('should add comment with handoff message', () => {
@@ -295,9 +295,8 @@ describe('High-Level Task Tools', () => {
         'Transferring because...'
       );
 
-      expect(result.comments).toHaveLength(1);
-      expect(result.comments[0].content).toBe('Transferring because...');
-      expect(result.comments[0].created_by).toBe('agent-1');
+      expect(result.comment.content).toBe('Transferring because...');
+      expect(result.comment.created_by).toBe('agent-1');
     });
 
     test('should throw error if task not found', () => {
@@ -347,7 +346,7 @@ describe('High-Level Task Tools', () => {
       }).toThrow(`Task ${task.id} with status 'complete' cannot be transferred (only 'idle' or 'working' are allowed)`);
     });
 
-    test('should return task with all comments and links', () => {
+    test('should keep existing comments and links through a transfer', () => {
       const task = client.taskService.createTask(
         createTestTask({
           assigned_to: 'agent-1',
@@ -374,8 +373,15 @@ describe('High-Level Task Tools', () => {
         'Handoff comment'
       );
 
-      expect(result.comments).toHaveLength(2); // Existing + handoff
-      expect(result.links).toHaveLength(1);
+      expect(result.task.id).toBe(task.id); // Transferred task without relations
+
+      // Existing + handoff comment on the task
+      const comments = client.commentService.listByTask(task.id);
+      expect(comments).toHaveLength(2);
+      expect(comments[1].content).toBe('Handoff comment');
+
+      // Link untouched by transfer
+      expect(client.linkService.listByTask(task.id)).toHaveLength(1);
     });
 
     test('should trim comment whitespace', () => {
@@ -393,7 +399,7 @@ describe('High-Level Task Tools', () => {
         '  Comment with spaces  '
       );
 
-      expect(result.comments[0].content).toBe('Comment with spaces');
+      expect(result.comment.content).toBe('Comment with spaces');
     });
   });
 
@@ -421,9 +427,10 @@ describe('High-Level Task Tools', () => {
         'agent-2',
         'Architecture complete, ready for coding'
       );
-      expect(transferredTask.assigned_to).toBe('agent-2');
-      expect(transferredTask.status).toBe('idle');
-      expect(transferredTask.comments).toHaveLength(1);
+      expect(transferredTask.task.assigned_to).toBe('agent-2');
+      expect(transferredTask.task.status).toBe('idle');
+      expect(transferredTask.comment.content).toBe('Architecture complete, ready for coding');
+      expect(client.commentService.listByTask(signedUpTask!.id)).toHaveLength(1);
 
       // Agent 2 signs up for transferred task
       const agent2Task = client.taskService.signupForTask('agent-2');
@@ -446,8 +453,8 @@ describe('High-Level Task Tools', () => {
         'agent-b',
         'From A to B'
       );
-      expect(taskAtB.assigned_to).toBe('agent-b');
-      expect(taskAtB.comments).toHaveLength(1);
+      expect(taskAtB.task.assigned_to).toBe('agent-b');
+      expect(client.commentService.listByTask(task.id)).toHaveLength(1);
 
       // B signs up
       const bWorking = client.taskService.signupForTask('agent-b');
@@ -460,12 +467,13 @@ describe('High-Level Task Tools', () => {
         'agent-c',
         'From B to C'
       );
-      expect(taskAtC.assigned_to).toBe('agent-c');
-      expect(taskAtC.comments).toHaveLength(2);
+      expect(taskAtC.task.assigned_to).toBe('agent-c');
 
       // Verify comment history
-      expect(taskAtC.comments[0].created_by).toBe('agent-a');
-      expect(taskAtC.comments[1].created_by).toBe('agent-b');
+      const comments = client.commentService.listByTask(task.id);
+      expect(comments).toHaveLength(2);
+      expect(comments[0].created_by).toBe('agent-a');
+      expect(comments[1].created_by).toBe('agent-b');
     });
 
     test('multiple agents competing for tasks (no conflicts)', () => {
@@ -540,9 +548,9 @@ describe('High-Level Task Tools', () => {
         'coder',
         'Design complete, ready for implementation'
       );
-      expect(coderTask.assigned_to).toBe('coder');
-      expect(coderTask.status).toBe('idle');
-      expect(coderTask.links).toHaveLength(1);
+      expect(coderTask.task.assigned_to).toBe('coder');
+      expect(coderTask.task.status).toBe('idle');
+      expect(client.linkService.listByTask(task.id)).toHaveLength(1);
 
       // Coder signs up
       const coding = client.taskService.signupForTask('coder');

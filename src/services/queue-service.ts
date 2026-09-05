@@ -7,6 +7,7 @@ import { Task, ParsedTask, QueueStats, TaskFilters } from '../types/index.js';
 import { toISO8601 } from '../utils/timestamp.js';
 import { EventBus } from '../events/event-bus.js';
 import { TaskEventType, createEvent, extractTaskContext } from '../events/event-types.js';
+import { recordTaskHistory } from './task-history.js';
 
 export class QueueService {
   constructor(
@@ -124,6 +125,22 @@ export class QueueService {
         [trimmedQueueName, taskId]
       );
 
+      // Audit trail: queue assignment change
+      if (taskRow.queue_name !== trimmedQueueName) {
+        recordTaskHistory(
+          this.db,
+          taskId,
+          [
+            {
+              field_name: 'queue_name',
+              old_value: taskRow.queue_name,
+              new_value: trimmedQueueName,
+            },
+          ],
+          null
+        );
+      }
+
       // Return updated task
       const updated = this.db.queryOne<Task>('SELECT * FROM tasks WHERE id = ?', [taskId]);
       if (!updated) {
@@ -155,6 +172,16 @@ export class QueueService {
         'UPDATE tasks SET queue_name = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [taskId]
       );
+
+      // Audit trail: queue removal
+      if (oldQueueName !== null) {
+        recordTaskHistory(
+          this.db,
+          taskId,
+          [{ field_name: 'queue_name', old_value: oldQueueName, new_value: null }],
+          null
+        );
+      }
 
       // Return updated task
       const updated = this.db.queryOne<Task>('SELECT * FROM tasks WHERE id = ?', [taskId]);
@@ -197,6 +224,22 @@ export class QueueService {
         'UPDATE tasks SET queue_name = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?',
         [trimmedQueueName, taskId]
       );
+
+      // Audit trail: queue move
+      if (taskRow.queue_name !== trimmedQueueName) {
+        recordTaskHistory(
+          this.db,
+          taskId,
+          [
+            {
+              field_name: 'queue_name',
+              old_value: taskRow.queue_name,
+              new_value: trimmedQueueName,
+            },
+          ],
+          null
+        );
+      }
 
       // Return updated task
       const updated = this.db.queryOne<Task>('SELECT * FROM tasks WHERE id = ?', [taskId]);
@@ -341,6 +384,7 @@ export class QueueService {
       auto_promote: task.auto_promote !== 0,
       created_at: toISO8601(task.created_at),
       updated_at: toISO8601(task.updated_at),
+      completed_at: task.completed_at ? toISO8601(task.completed_at) : null,
       archived_at: task.archived_at ? toISO8601(task.archived_at) : null,
     };
   }
