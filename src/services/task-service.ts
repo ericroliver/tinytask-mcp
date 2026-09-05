@@ -88,8 +88,8 @@ export class TaskService {
       const queueName = params.queue_name !== undefined ? params.queue_name : parentQueueName;
 
       const result = this.db.execute(
-        `INSERT INTO tasks (title, description, status, assigned_to, created_by, priority, tags, parent_task_id, queue_name, blocked_by_task_id)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO tasks (title, description, status, assigned_to, created_by, priority, tags, parent_task_id, queue_name, blocked_by_task_id, auto_promote)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           params.title.trim(),
           params.description || null,
@@ -101,6 +101,7 @@ export class TaskService {
           params.parent_task_id || null,
           queueName,
           params.blocked_by_task_id || null,
+          params.auto_promote === false ? 0 : 1,
         ]
       );
 
@@ -297,6 +298,11 @@ export class TaskService {
       if (updates.blocked_by_task_id !== undefined) {
         fields.push('blocked_by_task_id = ?');
         values.push(updates.blocked_by_task_id);
+      }
+
+      if (updates.auto_promote !== undefined) {
+        fields.push('auto_promote = ?');
+        values.push(updates.auto_promote ? 1 : 0);
       }
 
       // Always update updated_at
@@ -865,6 +871,7 @@ export class TaskService {
     'parent_task_id',
     'queue_name',
     'blocked_by_task_id',
+    'auto_promote',
     'created_at',
     'updated_at',
     'archived_at',
@@ -889,6 +896,7 @@ export class TaskService {
       ...task,
       tags: task.tags ? JSON.parse(task.tags as string) : [],
       is_currently_blocked: this.isCurrentlyBlocked(task),
+      auto_promote: task.auto_promote !== 0,
       created_at: toISO8601(task.created_at),
       updated_at: toISO8601(task.updated_at),
       archived_at: task.archived_at ? toISO8601(task.archived_at) : null,
@@ -931,24 +939,21 @@ export class TaskService {
       newStatus = 'idle';
     }
 
-    // Update parent status if it changed
-    const parent = this.db.queryOne<Task>('SELECT id, status FROM tasks WHERE id = ?', [parentId]);
+    // Check parent's auto_promote opt-out flag
+    const parent = this.db.queryOne<Task>(
+      'SELECT id, status, auto_promote FROM tasks WHERE id = ?',
+      [parentId]
+    );
 
-    if (parent && parent.status !== newStatus) {
-      this.db.execute('UPDATE tasks SET status = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', [
-        newStatus,
-        parentId,
-      ]);
-
-      // Recursively update grandparent if exists
-      const updatedParent = this.db.queryOne<Task>(
-        'SELECT parent_task_id FROM tasks WHERE id = ?',
-        [parentId]
-      );
-
-      if (updatedParent?.parent_task_id != null) {
-        this.updateParentStatus(updatedParent.parent_task_id);
-      }
+    if (!parent || parent.status === newStatus || parent.auto_promote === 0) {
+      // No change needed, or parent opted out of auto-promotion.
+      // Status is unchanged, so no need to propagate to grandparents either.
+      return;
     }
+
+    // Route the promotion through update() so it is auditable: updated_at is
+    // refreshed, TaskUpdated/TaskStatusChanged events are emitted, and the
+    // grandparent is updated recursively when this status change lands.
+    this.update(parentId, { status: newStatus });
   }
 }

@@ -86,6 +86,13 @@ export class DatabaseClient {
       `);
     }
 
+    // Migration: Add auto_promote column if it doesn't exist (parent auto-promotion opt-out)
+    if (!this.columnExists('tasks', 'auto_promote')) {
+      this.db.exec(`
+        ALTER TABLE tasks ADD COLUMN auto_promote INTEGER NOT NULL DEFAULT 1;
+      `);
+    }
+
     // Migration: Add blocked_by_task_id column if it doesn't exist
     // Since SQLite doesn't support adding FOREIGN KEY constraints to existing tables,
     // we need to rebuild the table if the column doesn't exist

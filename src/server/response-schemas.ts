@@ -25,6 +25,7 @@ export const ParsedTaskSchema = z.object({
   queue_name: z.string().nullable().describe('Queue name the task belongs to'),
   blocked_by_task_id: z.number().nullable().describe('ID of task blocking this one'),
   is_currently_blocked: z.boolean().describe('Whether the task is currently blocked'),
+  auto_promote: z.boolean().describe("Whether the task's status auto-updates from its children (default: true)"),
   created_at: z.string().describe('ISO timestamp of creation'),
   updated_at: z.string().describe('ISO timestamp of last update'),
   archived_at: z.string().nullable().describe('ISO timestamp of archival, null if not archived'),

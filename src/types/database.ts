@@ -15,6 +15,7 @@ export interface Task {
   parent_task_id: number | null;
   queue_name: string | null;
   blocked_by_task_id: number | null;
+  auto_promote: number;
   created_at: string;
   updated_at: string;
   archived_at: string | null;

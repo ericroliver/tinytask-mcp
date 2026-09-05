@@ -20,6 +20,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI 0.4.0: `task list --full` (include descriptions), `task list --fields id,title,...`
   (client-side field projection), `task list --format table|json|csv|compact`
   (per-invocation format override).
+- `auto_promote` opt-out for parent status auto-promotion (per task, default true).
+  Create/update tasks with `auto_promote: false` (MCP/REST) or
+  `--no-auto-promote` (CLI) so the task's status is never auto-flipped by its
+  children. Promotion writes now flow through `update()` — they refresh
+  `updated_at` and emit `task-updated` / `task-status-changed` events instead of
+  bypassing the service layer.
 
 ### Fixed
 - CLI: `queue list` and `queue view` render correctly in table, compact and csv formats

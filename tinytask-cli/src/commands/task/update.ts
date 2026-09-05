@@ -19,6 +19,10 @@ export function createTaskUpdateCommand(program: Command): void {
     .option('--tags <tags>', 'Update tags (comma-separated)')
     .option('--parent <id>', 'Change parent task ID (use "null" to make top-level)')
     .option('-q, --queue <name>', 'Change queue assignment')
+    .option(
+      '--no-auto-promote',
+      "Disable auto-updating this task's status from its children (default: auto-promote on)"
+    )
     .addHelpText(
       'after',
       [
@@ -83,6 +87,10 @@ export function createTaskUpdateCommand(program: Command): void {
         }
 
         if (options.queue) updates.queue_name = options.queue;
+
+        if (options.autoPromote === false) {
+          updates.auto_promote = false;
+        }
 
         const task = await client.updateTask(updates);
 

@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS tasks (
     parent_task_id INTEGER,
     queue_name TEXT,
     blocked_by_task_id INTEGER,
+    auto_promote INTEGER NOT NULL DEFAULT 1,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     archived_at DATETIME,

@@ -20,6 +20,7 @@ export const toolSchemas = {
     parent_task_id: z.coerce.number().optional().describe('Parent task ID (creates subtask)'),
     queue_name: z.string().optional().describe('Queue name (dev, product, qa, etc.)'),
     blocked_by_task_id: z.coerce.number().optional().describe('ID of task that blocks this task. Task will be blocked until the blocking task is completed.'),
+    auto_promote: z.boolean().optional().describe("Whether this task's status auto-updates from its children's statuses (default: true). Set false to opt out."),
   }).strict(),
 
   update_task: z.object({
@@ -33,6 +34,7 @@ export const toolSchemas = {
     parent_task_id: z.coerce.number().optional().describe('New parent task ID (null to make top-level)'),
     queue_name: z.string().optional().describe('New queue name'),
     blocked_by_task_id: z.coerce.number().nullable().optional().describe('ID of task that blocks this task. Set to null to unblock. Task cannot block itself.'),
+    auto_promote: z.boolean().optional().describe("Whether this task's status auto-updates from its children's statuses (default: true). Set false to opt out."),
   }).strict(),
 
   get_task: z.object({

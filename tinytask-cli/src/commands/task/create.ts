@@ -17,6 +17,10 @@ export function createTaskCreateCommand(program: Command): void {
     .option('-t, --tags <tags>', 'Comma-separated tags')
     .option('--parent <id>', 'Create as subtask under parent task ID', parseInt)
     .option('-q, --queue <name>', 'Assign to queue')
+    .option(
+      '--no-auto-promote',
+      "Disable auto-updating this task's status from its children (default: auto-promote on)"
+    )
     .addHelpText(
       'after',
       [
@@ -80,6 +84,7 @@ export function createTaskCreateCommand(program: Command): void {
           tags,
           parent_task_id: options.parent,
           queue_name: options.queue,
+          auto_promote: options.autoPromote === false ? false : undefined,
         });
 
         // Format output

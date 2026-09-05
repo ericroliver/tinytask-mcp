@@ -16,6 +16,7 @@ export async function createTaskHandler(
     parent_task_id?: number;
     queue_name?: string;
     blocked_by_task_id?: number;
+    auto_promote?: boolean;
   }
 ) {
   try {
@@ -243,6 +244,7 @@ export async function updateTaskHandler(
     parent_task_id?: number;
     queue_name?: string;
     blocked_by_task_id?: number | null;
+    auto_promote?: boolean;
   }
 ) {
   try {

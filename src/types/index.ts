@@ -19,6 +19,7 @@ export interface ParsedTask {
   queue_name: string | null;
   blocked_by_task_id: number | null;
   is_currently_blocked: boolean;
+  auto_promote: boolean;
   created_at: string;
   updated_at: string;
   archived_at: string | null;
@@ -65,6 +66,7 @@ export interface CreateTaskParams {
   parent_task_id?: number;
   queue_name?: string;
   blocked_by_task_id?: number;
+  auto_promote?: boolean;
 }
 
 export interface UpdateTaskParams {
@@ -77,6 +79,7 @@ export interface UpdateTaskParams {
   parent_task_id?: number | null;
   queue_name?: string;
   blocked_by_task_id?: number | null;
+  auto_promote?: boolean;
 }
 
 export interface TaskFilters {

@@ -129,6 +129,11 @@ function validateTaskBodyFields(body: Record<string, unknown>, isPatch: boolean)
     }
   }
 
+  // auto_promote: must be a boolean if provided
+  if (body.auto_promote !== undefined && typeof body.auto_promote !== 'boolean') {
+    return 'auto_promote must be a boolean';
+  }
+
   // description: must be a string if provided
   if (body.description !== undefined && body.description !== null && !isString(body.description)) {
     return 'description must be a string';
@@ -196,6 +201,7 @@ export function createRestRouter(
         parent_task_id: req.body.parent_task_id,
         queue_name: req.body.queue_name,
         blocked_by_task_id: req.body.blocked_by_task_id,
+        auto_promote: req.body.auto_promote,
       });
       res.status(201).json(task);
     } catch (e) {
@@ -326,6 +332,7 @@ export function createRestRouter(
         parent_task_id: req.body.parent_task_id,
         queue_name: req.body.queue_name,
         blocked_by_task_id: req.body.blocked_by_task_id,
+        auto_promote: req.body.auto_promote,
       });
       res.json(task);
     } catch (e) {
