@@ -29,22 +29,22 @@ Two new MCP tools designed to minimize token consumption by combining multiple o
 
 **Priority Note:** Higher priority numbers are MORE important (e.g., priority 10 > priority 5)
 
-**Output (Success):**
+**Output (Success)** — claimed task object as JSON (status set to `working`):
 ```json
 {
   "content": [{
     "type": "text",
-    "text": "Task #123 claimed and set to working status\n\n{complete_task_json}"
+    "text": "{complete_task_json}"
   }]
 }
 ```
 
-**Output (No Tasks):**
+**Output (No Tasks)** — JSON `null` (v2.2.2+; never an error — clients treat it as "nothing to do"):
 ```json
 {
   "content": [{
     "type": "text",
-    "text": "No idle tasks available in queue for agent: {agent_name}"
+    "text": "null"
   }]
 }
 ```

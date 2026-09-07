@@ -86,7 +86,11 @@ export class CommentService {
       return this.parseComment(created);
     });
 
-    this.emit(TaskEventType.CommentAdded, { taskId: params.task_id, comment, ...(this.getTaskContext(params.task_id) ?? {}) });
+    this.emit(TaskEventType.CommentAdded, {
+      taskId: params.task_id,
+      comment,
+      ...(this.getTaskContext(params.task_id) ?? {}),
+    });
     return comment;
   }
 
@@ -159,7 +163,11 @@ export class CommentService {
       throw new Error(`Comment not found: ${id}`);
     }
 
-    this.emit(TaskEventType.CommentDeleted, { taskId: comment.task_id, commentId: id, ...(this.getTaskContext(comment.task_id) ?? {}) });
+    this.emit(TaskEventType.CommentDeleted, {
+      taskId: comment.task_id,
+      commentId: id,
+      ...(this.getTaskContext(comment.task_id) ?? {}),
+    });
   }
 
   /**
@@ -190,10 +198,9 @@ export class CommentService {
       );
 
       const newCommentId = insertResult.lastInsertRowid as number;
-      const newComment = this.db.queryOne<Comment>(
-        'SELECT * FROM comments WHERE id = ?',
-        [newCommentId]
-      );
+      const newComment = this.db.queryOne<Comment>('SELECT * FROM comments WHERE id = ?', [
+        newCommentId,
+      ]);
       if (!newComment) {
         throw new Error('Failed to retrieve moved comment');
       }

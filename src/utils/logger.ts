@@ -80,8 +80,7 @@ export class Logger {
     }
 
     // Format context object
-    const contextStr =
-      typeof context === 'string' ? context : JSON.stringify(context, null, 2);
+    const contextStr = typeof context === 'string' ? context : JSON.stringify(context, null, 2);
 
     return `${prefix} ${message}\n${contextStr}`;
   }

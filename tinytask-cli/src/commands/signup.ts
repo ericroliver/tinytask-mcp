@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { ensureConnected } from '../client/connection.js';
+import { exitWithError } from '../utils/errors.js';
 import { createFormatter } from '../formatters/index.js';
 import { loadConfig } from '../config/loader.js';
 
@@ -55,11 +56,7 @@ export function createSignupCommand(program: Command): void {
           console.log(chalk.green(`\n✓ Claimed task #${t.id}: ${t.title}`));
         }
       } catch (error) {
-        console.error(
-          chalk.red('Error signing up for task:'),
-          error instanceof Error ? error.message : String(error)
-        );
-        process.exit(1);
+        await exitWithError('Error signing up for task:', error);
       }
     });
 }

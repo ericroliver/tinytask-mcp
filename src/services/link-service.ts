@@ -85,7 +85,11 @@ export class LinkService {
       return this.parseLink(created);
     });
 
-    this.emit(TaskEventType.LinkAdded, { taskId: params.task_id, link, ...(this.getTaskContext(params.task_id) ?? {}) });
+    this.emit(TaskEventType.LinkAdded, {
+      taskId: params.task_id,
+      link,
+      ...(this.getTaskContext(params.task_id) ?? {}),
+    });
     return link;
   }
 
@@ -181,7 +185,11 @@ export class LinkService {
       throw new Error(`Link not found: ${id}`);
     }
 
-    this.emit(TaskEventType.LinkDeleted, { taskId: link.task_id, linkId: id, ...(this.getTaskContext(link.task_id) ?? {}) });
+    this.emit(TaskEventType.LinkDeleted, {
+      taskId: link.task_id,
+      linkId: id,
+      ...(this.getTaskContext(link.task_id) ?? {}),
+    });
   }
 
   /**

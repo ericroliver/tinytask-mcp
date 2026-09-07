@@ -5,6 +5,32 @@ All notable changes to the TinyTask CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-09-07
+
+### Fixed
+- **`task history` no longer hard-aborts against older servers** (#898): an
+  "Unknown tool: get_task_history" error (server image older than 2.2.0) now
+  prints actionable guidance (rebuild/redeploy tinytask-mcp, then retry)
+  and exits 1 cleanly. Previously the CLI surfaced the raw error and the
+  process could die with a libuv abort (exit -1073740791) on Windows SEA
+  builds because `process.exit()` raced the still-open MCP transport.
+- **Graceful shutdown everywhere** (#898, #900): the CLI now disconnects
+  the MCP client before exiting on error paths (history, signup, task
+  delete), and installs global `unhandledRejection`/`uncaughtException`
+  handlers that print a clean message and exit 1 — no more bare libuv
+  aborts.
+- **`signup` no longer fails on a bare "nothing to do" answer** (#899):
+  the client tolerates all known server response shapes — pure JSON task
+  object or `null` (server >= 2.2.2), legacy "No idle tasks..." text, and
+  legacy "Task #N claimed..." text wrapping the task JSON. Empty-queue
+  signups now print "No idle tasks available in your queue" and exit 0.
+
+### Added
+- Regression tests: `task delete` / `queue clear` expose `-y/--yes`
+  ("Skip confirmation") so non-interactive agents never need to pipe `y`
+  (#900). Live verification: `--yes` skips the prompt at HEAD; if your
+  build still prompts, rebuild via `deploy-windows.ps1` from latest main.
+
 ## [0.5.1] - 2026-09-05
 
 ### Added

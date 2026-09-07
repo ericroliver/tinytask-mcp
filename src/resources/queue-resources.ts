@@ -134,7 +134,7 @@ export async function handleQueueStatsResource(
     text += `  Idle: ${stats.by_status.idle}\n`;
     text += `  Working: ${stats.by_status.working}\n`;
     text += `  Complete: ${stats.by_status.complete}\n\n`;
-    
+
     if (stats.agents.length > 0) {
       text += `Agents (${stats.agents.length}):\n`;
       for (const agent of stats.agents) {

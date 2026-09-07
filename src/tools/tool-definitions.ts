@@ -10,149 +10,244 @@ import { z } from 'zod';
  */
 export const toolSchemas = {
   // Task tools
-  create_task: z.object({
-    title: z.string().describe('Task title'),
-    description: z.string().optional().describe('Task description'),
-    assigned_to: z.string().optional().describe('Agent name to assign to'),
-    created_by: z.string().describe('Agent name creating the task (required)'),
-    priority: z.coerce.number().optional().describe('Priority level (default: 0)'),
-    tags: z.array(z.string()).optional().describe('Array of tags'),
-    parent_task_id: z.coerce.number().optional().describe('Parent task ID (creates subtask)'),
-    queue_name: z.string().optional().describe('Queue name (dev, product, qa, etc.)'),
-    blocked_by_task_id: z.coerce.number().optional().describe('ID of task that blocks this task. Task will be blocked until the blocking task is completed.'),
-    auto_promote: z.boolean().optional().describe("Whether this task's status auto-updates from its children's statuses (default: true). Set false to opt out."),
-  }).strict(),
+  create_task: z
+    .object({
+      title: z.string().describe('Task title'),
+      description: z.string().optional().describe('Task description'),
+      assigned_to: z.string().optional().describe('Agent name to assign to'),
+      created_by: z.string().describe('Agent name creating the task (required)'),
+      priority: z.coerce.number().optional().describe('Priority level (default: 0)'),
+      tags: z.array(z.string()).optional().describe('Array of tags'),
+      parent_task_id: z.coerce.number().optional().describe('Parent task ID (creates subtask)'),
+      queue_name: z.string().optional().describe('Queue name (dev, product, qa, etc.)'),
+      blocked_by_task_id: z.coerce
+        .number()
+        .optional()
+        .describe(
+          'ID of task that blocks this task. Task will be blocked until the blocking task is completed.'
+        ),
+      auto_promote: z
+        .boolean()
+        .optional()
+        .describe(
+          "Whether this task's status auto-updates from its children's statuses (default: true). Set false to opt out."
+        ),
+    })
+    .strict(),
 
-  update_task: z.object({
-    id: z.coerce.number().describe('Task ID'),
-    title: z.string().optional().describe('New title'),
-    description: z.string().optional().describe('New description'),
-    status: z.enum(['idle', 'working', 'complete']).optional().describe('New status'),
-    assigned_to: z.string().optional().describe('New assignee'),
-    priority: z.coerce.number().optional().describe('New priority'),
-    tags: z.array(z.string()).optional().describe('New tags (replaces existing)'),
-    parent_task_id: z.coerce.number().optional().describe('New parent task ID (null to make top-level)'),
-    queue_name: z.string().optional().describe('New queue name'),
-    blocked_by_task_id: z.coerce.number().nullable().optional().describe('ID of task that blocks this task. Set to null to unblock. Task cannot block itself.'),
-    auto_promote: z.boolean().optional().describe("Whether this task's status auto-updates from its children's statuses (default: true). Set false to opt out."),
-    updated_by: z.string().optional().describe('Agent making this change, recorded in task history'),
-  }).strict(),
+  update_task: z
+    .object({
+      id: z.coerce.number().describe('Task ID'),
+      title: z.string().optional().describe('New title'),
+      description: z.string().optional().describe('New description'),
+      status: z.enum(['idle', 'working', 'complete']).optional().describe('New status'),
+      assigned_to: z.string().optional().describe('New assignee'),
+      priority: z.coerce.number().optional().describe('New priority'),
+      tags: z.array(z.string()).optional().describe('New tags (replaces existing)'),
+      parent_task_id: z.coerce
+        .number()
+        .optional()
+        .describe('New parent task ID (null to make top-level)'),
+      queue_name: z.string().optional().describe('New queue name'),
+      blocked_by_task_id: z.coerce
+        .number()
+        .nullable()
+        .optional()
+        .describe(
+          'ID of task that blocks this task. Set to null to unblock. Task cannot block itself.'
+        ),
+      auto_promote: z
+        .boolean()
+        .optional()
+        .describe(
+          "Whether this task's status auto-updates from its children's statuses (default: true). Set false to opt out."
+        ),
+      updated_by: z
+        .string()
+        .optional()
+        .describe('Agent making this change, recorded in task history'),
+    })
+    .strict(),
 
-  get_task: z.object({
-    id: z.coerce.number().describe('Task ID'),
-  }).strict(),
+  get_task: z
+    .object({
+      id: z.coerce.number().describe('Task ID'),
+    })
+    .strict(),
 
-  get_task_history: z.object({
-    task_id: z.coerce.number().describe('Task ID to get history for'),
-  }).strict(),
+  get_task_history: z
+    .object({
+      task_id: z.coerce.number().describe('Task ID to get history for'),
+    })
+    .strict(),
 
-  delete_task: z.object({
-    id: z.coerce.number().describe('Task ID'),
-  }).strict(),
+  delete_task: z
+    .object({
+      id: z.coerce.number().describe('Task ID'),
+    })
+    .strict(),
 
-  archive_task: z.object({
-    id: z.coerce.number().describe('Task ID'),
-  }).strict(),
+  archive_task: z
+    .object({
+      id: z.coerce.number().describe('Task ID'),
+    })
+    .strict(),
 
-  list_tasks: z.object({
-    assigned_to: z.string().optional().describe('Filter by assignee'),
-    status: z.union([
-      z.enum(['idle', 'working', 'complete']),
-      z.array(z.enum(['idle', 'working', 'complete'])),
-    ]).optional().describe('Filter by status (single value or array of statuses)'),
-    exclude_status: z.array(z.enum(['idle', 'working', 'complete'])).optional().describe('Exclude tasks with these statuses'),
-    include_archived: z.boolean().optional().describe('Include archived tasks'),
-    include_description: z.boolean().optional().describe('Include full task descriptions (default: false - descriptions omitted to keep responses small)'),
-    limit: z.coerce.number().optional().describe('Max results (default: 100)'),
-    offset: z.coerce.number().optional().describe('Pagination offset'),
-    queue_name: z.string().optional().describe('Filter by queue name'),
-    parent_task_id: z.coerce.number().optional().describe('Filter by parent task ID'),
-    exclude_subtasks: z.boolean().optional().describe('Exclude subtasks from results (default: false)'),
-  }).strict(),
+  list_tasks: z
+    .object({
+      assigned_to: z.string().optional().describe('Filter by assignee'),
+      status: z
+        .union([
+          z.enum(['idle', 'working', 'complete']),
+          z.array(z.enum(['idle', 'working', 'complete'])),
+        ])
+        .optional()
+        .describe('Filter by status (single value or array of statuses)'),
+      exclude_status: z
+        .array(z.enum(['idle', 'working', 'complete']))
+        .optional()
+        .describe('Exclude tasks with these statuses'),
+      include_archived: z.boolean().optional().describe('Include archived tasks'),
+      include_description: z
+        .boolean()
+        .optional()
+        .describe(
+          'Include full task descriptions (default: false - descriptions omitted to keep responses small)'
+        ),
+      limit: z.coerce.number().optional().describe('Max results (default: 100)'),
+      offset: z.coerce.number().optional().describe('Pagination offset'),
+      queue_name: z.string().optional().describe('Filter by queue name'),
+      parent_task_id: z.coerce.number().optional().describe('Filter by parent task ID'),
+      exclude_subtasks: z
+        .boolean()
+        .optional()
+        .describe('Exclude subtasks from results (default: false)'),
+    })
+    .strict(),
 
   // Subtask tools
-  create_subtask: z.object({
-    parent_task_id: z.coerce.number().describe('Parent task ID'),
-    title: z.string().describe('Subtask title'),
-    description: z.string().optional().describe('Subtask description'),
-    assigned_to: z.string().optional().describe('Agent to assign to'),
-    created_by: z.string().describe('Agent name creating the subtask (required)'),
-    priority: z.coerce.number().optional().describe('Priority (default: 0)'),
-    tags: z.array(z.string()).optional().describe('Tags'),
-    queue_name: z.string().optional().describe('Override queue from parent'),
-  }).strict(),
+  create_subtask: z
+    .object({
+      parent_task_id: z.coerce.number().describe('Parent task ID'),
+      title: z.string().describe('Subtask title'),
+      description: z.string().optional().describe('Subtask description'),
+      assigned_to: z.string().optional().describe('Agent to assign to'),
+      created_by: z.string().describe('Agent name creating the subtask (required)'),
+      priority: z.coerce.number().optional().describe('Priority (default: 0)'),
+      tags: z.array(z.string()).optional().describe('Tags'),
+      queue_name: z.string().optional().describe('Override queue from parent'),
+    })
+    .strict(),
 
-  get_subtasks: z.object({
-    parent_task_id: z.coerce.number().describe('Parent task ID'),
-    recursive: z.boolean().optional().describe('Include nested subtasks (default: false)'),
-    include_archived: z.boolean().optional().describe('Include archived subtasks'),
-  }).strict(),
+  get_subtasks: z
+    .object({
+      parent_task_id: z.coerce.number().describe('Parent task ID'),
+      recursive: z.boolean().optional().describe('Include nested subtasks (default: false)'),
+      include_archived: z.boolean().optional().describe('Include archived subtasks'),
+    })
+    .strict(),
 
-  get_task_with_subtasks: z.object({
-    task_id: z.coerce.number().describe('Task ID'),
-    recursive: z.boolean().optional().describe('Include nested subtasks (default: false)'),
-  }).strict(),
+  get_task_with_subtasks: z
+    .object({
+      task_id: z.coerce.number().describe('Task ID'),
+      recursive: z.boolean().optional().describe('Include nested subtasks (default: false)'),
+    })
+    .strict(),
 
-  move_subtask: z.object({
-    subtask_id: z.coerce.number().describe('Subtask ID to move'),
-    new_parent_id: z.coerce.number().optional().describe('New parent task ID (null or omit to make top-level)'),
-  }).strict(),
+  move_subtask: z
+    .object({
+      subtask_id: z.coerce.number().describe('Subtask ID to move'),
+      new_parent_id: z.coerce
+        .number()
+        .optional()
+        .describe('New parent task ID (null or omit to make top-level)'),
+    })
+    .strict(),
 
-  get_my_queue: z.object({
-    agent_name: z.string().describe('Agent name'),
-    include_description: z.boolean().optional().describe('Include full task descriptions (default: false - descriptions omitted to keep responses small)'),
-  }).strict(),
+  get_my_queue: z
+    .object({
+      agent_name: z.string().describe('Agent name'),
+      include_description: z
+        .boolean()
+        .optional()
+        .describe(
+          'Include full task descriptions (default: false - descriptions omitted to keep responses small)'
+        ),
+    })
+    .strict(),
 
-  signup_for_task: z.object({
-    agent_name: z.string().describe('Agent name signing up for task'),
-  }).strict(),
+  signup_for_task: z
+    .object({
+      agent_name: z.string().describe('Agent name signing up for task'),
+    })
+    .strict(),
 
-  move_task: z.object({
-    task_id: z.coerce.number().describe('Task ID to transfer'),
-    current_agent: z.string().describe('Current agent (for verification)'),
-    new_agent: z.string().describe('Agent to transfer to'),
-    comment: z.string().describe('Handoff message/context'),
-  }).strict(),
+  move_task: z
+    .object({
+      task_id: z.coerce.number().describe('Task ID to transfer'),
+      current_agent: z.string().describe('Current agent (for verification)'),
+      new_agent: z.string().describe('Agent to transfer to'),
+      comment: z.string().describe('Handoff message/context'),
+    })
+    .strict(),
 
   // Queue tools
   list_queues: z.object({}).strict(),
 
-  get_queue_stats: z.object({
-    queue_name: z.string().describe('Queue name'),
-  }).strict(),
+  get_queue_stats: z
+    .object({
+      queue_name: z.string().describe('Queue name'),
+    })
+    .strict(),
 
-  add_task_to_queue: z.object({
-    task_id: z.coerce.number().describe('Task ID'),
-    queue_name: z.string().describe('Queue name to add task to'),
-  }).strict(),
+  add_task_to_queue: z
+    .object({
+      task_id: z.coerce.number().describe('Task ID'),
+      queue_name: z.string().describe('Queue name to add task to'),
+    })
+    .strict(),
 
-  remove_task_from_queue: z.object({
-    task_id: z.coerce.number().describe('Task ID'),
-  }).strict(),
+  remove_task_from_queue: z
+    .object({
+      task_id: z.coerce.number().describe('Task ID'),
+    })
+    .strict(),
 
-  move_task_to_queue: z.object({
-    task_id: z.coerce.number().describe('Task ID'),
-    new_queue_name: z.string().describe('New queue name to move task to'),
-  }).strict(),
+  move_task_to_queue: z
+    .object({
+      task_id: z.coerce.number().describe('Task ID'),
+      new_queue_name: z.string().describe('New queue name to move task to'),
+    })
+    .strict(),
 
-  get_queue_tasks: z.object({
-    queue_name: z.string().describe('Queue name'),
-    assigned_to: z.string().optional().describe('Filter by assignee'),
-    status: z.union([
-      z.enum(['idle', 'working', 'complete']),
-      z.array(z.enum(['idle', 'working', 'complete'])),
-    ]).optional().describe('Filter by status (single value or array of statuses)'),
-    exclude_status: z.array(z.enum(['idle', 'working', 'complete'])).optional().describe('Exclude tasks with these statuses'),
-    parent_task_id: z.coerce.number().optional().describe('Filter by parent task ID'),
-    exclude_subtasks: z.boolean().optional().describe('Exclude subtasks from results'),
-    include_archived: z.boolean().optional().describe('Include archived tasks'),
-    limit: z.coerce.number().optional().describe('Max results'),
-    offset: z.coerce.number().optional().describe('Pagination offset'),
-  }).strict(),
+  get_queue_tasks: z
+    .object({
+      queue_name: z.string().describe('Queue name'),
+      assigned_to: z.string().optional().describe('Filter by assignee'),
+      status: z
+        .union([
+          z.enum(['idle', 'working', 'complete']),
+          z.array(z.enum(['idle', 'working', 'complete'])),
+        ])
+        .optional()
+        .describe('Filter by status (single value or array of statuses)'),
+      exclude_status: z
+        .array(z.enum(['idle', 'working', 'complete']))
+        .optional()
+        .describe('Exclude tasks with these statuses'),
+      parent_task_id: z.coerce.number().optional().describe('Filter by parent task ID'),
+      exclude_subtasks: z.boolean().optional().describe('Exclude subtasks from results'),
+      include_archived: z.boolean().optional().describe('Include archived tasks'),
+      limit: z.coerce.number().optional().describe('Max results'),
+      offset: z.coerce.number().optional().describe('Pagination offset'),
+    })
+    .strict(),
 
-  clear_queue: z.object({
-    queue_name: z.string().describe('Queue name to clear'),
-  }).strict(),
+  clear_queue: z
+    .object({
+      queue_name: z.string().describe('Queue name to clear'),
+    })
+    .strict(),
 
   // Comment tools
   add_comment: z.object({
@@ -241,21 +336,21 @@ function zodToJsonSchema(schema: z.ZodObject<z.ZodRawShape>): Record<string, unk
     } else if (zodType instanceof z.ZodOptional) {
       // Recursive handling for optional types
       let innerType = zodType._def.innerType;
-      
+
       // Unwrap ZodEffects in optional types as well
       if (innerType instanceof z.ZodEffects) {
         innerType = innerType._def.schema;
       }
-      
+
       // Handle nullable types (e.g., z.number().nullable())
       if (innerType instanceof z.ZodNullable) {
         let innerNullableType = innerType._def.innerType;
-        
+
         // Unwrap ZodEffects in nullable types
         if (innerNullableType instanceof z.ZodEffects) {
           innerNullableType = innerNullableType._def.schema;
         }
-        
+
         if (innerNullableType instanceof z.ZodNumber) {
           properties[key] = { type: ['number', 'null'], description };
         } else if (innerNullableType instanceof z.ZodString) {
@@ -319,7 +414,8 @@ export const toolDefinitions = [
   },
   {
     name: 'get_task_history',
-    description: 'Get the audit-trail history for a task (chronological): field changes with old/new values, acting agent, and timestamps',
+    description:
+      'Get the audit-trail history for a task (chronological): field changes with old/new values, acting agent, and timestamps',
     inputSchema: zodToJsonSchema(toolSchemas.get_task_history),
   },
   {
@@ -344,12 +440,14 @@ export const toolDefinitions = [
   },
   {
     name: 'signup_for_task',
-    description: 'Claim the highest priority idle task from your queue and mark it as working',
+    description:
+      'Claim the highest priority idle task from your queue and mark it as working. Returns the claimed task object, or JSON null when no idle tasks are available',
     inputSchema: zodToJsonSchema(toolSchemas.signup_for_task),
   },
   {
     name: 'move_task',
-    description: 'Transfer a task to another agent with status reset to idle and add handoff comment',
+    description:
+      'Transfer a task to another agent with status reset to idle and add handoff comment',
     inputSchema: zodToJsonSchema(toolSchemas.move_task),
   },
 

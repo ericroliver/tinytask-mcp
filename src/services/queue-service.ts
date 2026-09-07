@@ -150,7 +150,11 @@ export class QueueService {
       return this.parseTask(updated);
     });
 
-    this.emit(TaskEventType.TaskAddedToQueue, { taskId, queueName: queueName.trim(), ...extractTaskContext(task) });
+    this.emit(TaskEventType.TaskAddedToQueue, {
+      taskId,
+      queueName: queueName.trim(),
+      ...extractTaskContext(task),
+    });
     return task;
   }
 
@@ -192,7 +196,11 @@ export class QueueService {
       return this.parseTask(updated);
     });
 
-    this.emit(TaskEventType.TaskRemovedFromQueue, { taskId, queueName: oldQueueName, ...extractTaskContext(task) });
+    this.emit(TaskEventType.TaskRemovedFromQueue, {
+      taskId,
+      queueName: oldQueueName,
+      ...extractTaskContext(task),
+    });
     return task;
   }
 

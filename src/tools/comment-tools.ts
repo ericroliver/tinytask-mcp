@@ -93,10 +93,7 @@ export async function deleteCommentHandler(commentService: CommentService, param
   }
 }
 
-export async function getCommentHandler(
-  commentService: CommentService,
-  params: { id: number }
-) {
+export async function getCommentHandler(commentService: CommentService, params: { id: number }) {
   try {
     const comment = commentService.get(params.id);
     if (!comment) {

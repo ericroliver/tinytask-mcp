@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import Table from 'cli-table3';
 import { ensureConnected } from '../../client/connection.js';
+import { exitWithError } from '../../utils/errors.js';
 import { loadConfig } from '../../config/loader.js';
 
 interface HistoryEntry {
@@ -56,22 +57,13 @@ export function createTaskHistoryCommand(task: Command): void {
         for (const entry of history) {
           if (!isHistoryEntry(entry)) continue;
           const transition = `${entry.old_value ?? '—'} → ${entry.new_value ?? '—'}`;
-          table.push([
-            entry.changed_at,
-            entry.field_name,
-            transition,
-            entry.changed_by ?? '—',
-          ]);
+          table.push([entry.changed_at, entry.field_name, transition, entry.changed_by ?? '—']);
         }
 
         console.log(chalk.bold(`History for task #${id} (${history.length} entries)`));
         console.log(table.toString());
       } catch (error) {
-        console.error(
-          chalk.red('Error getting task history:'),
-          error instanceof Error ? error.message : String(error)
-        );
-        process.exit(1);
+        await exitWithError('Error getting task history:', error);
       }
     });
 }

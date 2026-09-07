@@ -38,14 +38,17 @@ function isString(value: unknown): value is string {
  * Validate that a value is an array of strings.
  */
 function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every(v => typeof v === 'string');
+  return Array.isArray(value) && value.every((v) => typeof v === 'string');
 }
 
 /**
  * Parse and validate a query param as a positive integer.
  * Returns { value, error } - if error is set, value is undefined.
  */
-function parseQueryInt(param: string | undefined, fieldName: string): { value: number | undefined; error?: string } {
+function parseQueryInt(
+  param: string | undefined,
+  fieldName: string
+): { value: number | undefined; error?: string } {
   if (param === undefined) return { value: undefined };
   const parsed = Number(param);
   if (!Number.isFinite(parsed) || !Number.isInteger(parsed) || parsed < 0) {
@@ -58,7 +61,10 @@ function parseQueryInt(param: string | undefined, fieldName: string): { value: n
  * Parse and validate a query param as a boolean ('true' or 'false').
  * Returns { value, error } - if error is set, value is undefined.
  */
-function parseQueryBool(param: string | undefined, fieldName: string): { value: boolean | undefined; error?: string } {
+function parseQueryBool(
+  param: string | undefined,
+  fieldName: string
+): { value: boolean | undefined; error?: string } {
   if (param === undefined) return { value: undefined };
   if (param === 'true') return { value: true };
   if (param === 'false') return { value: false };
@@ -69,12 +75,21 @@ function parseQueryBool(param: string | undefined, fieldName: string): { value: 
  * Parse and validate a query param as a status string or comma-separated list.
  * Returns an array if multiple values are provided, a single string if one.
  */
-function parseQueryStatus(param: string | undefined): { value: 'idle' | 'working' | 'complete' | ('idle' | 'working' | 'complete')[] | undefined; error?: string } {
+function parseQueryStatus(param: string | undefined): {
+  value: 'idle' | 'working' | 'complete' | ('idle' | 'working' | 'complete')[] | undefined;
+  error?: string;
+} {
   if (param === undefined) return { value: undefined };
-  const parts = param.split(',').map(s => s.trim()).filter(Boolean);
+  const parts = param
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
   for (const part of parts) {
-    if (!VALID_STATUSES.includes(part as typeof VALID_STATUSES[number])) {
-      return { value: undefined, error: `status must be one of: ${VALID_STATUSES.join(', ')} (got: "${part}")` };
+    if (!VALID_STATUSES.includes(part as (typeof VALID_STATUSES)[number])) {
+      return {
+        value: undefined,
+        error: `status must be one of: ${VALID_STATUSES.join(', ')} (got: "${part}")`,
+      };
     }
   }
   if (parts.length === 1) return { value: parts[0] as 'idle' | 'working' | 'complete' };
@@ -84,12 +99,21 @@ function parseQueryStatus(param: string | undefined): { value: 'idle' | 'working
 /**
  * Parse and validate a query param as a comma-separated exclude_status list.
  */
-function parseQueryExcludeStatus(param: string | undefined): { value: ('idle' | 'working' | 'complete')[] | undefined; error?: string } {
+function parseQueryExcludeStatus(param: string | undefined): {
+  value: ('idle' | 'working' | 'complete')[] | undefined;
+  error?: string;
+} {
   if (param === undefined) return { value: undefined };
-  const parts = param.split(',').map(s => s.trim()).filter(Boolean);
+  const parts = param
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
   for (const part of parts) {
-    if (!VALID_STATUSES.includes(part as typeof VALID_STATUSES[number])) {
-      return { value: undefined, error: `exclude_status must be one of: ${VALID_STATUSES.join(', ')} (got: "${part}")` };
+    if (!VALID_STATUSES.includes(part as (typeof VALID_STATUSES)[number])) {
+      return {
+        value: undefined,
+        error: `exclude_status must be one of: ${VALID_STATUSES.join(', ')} (got: "${part}")`,
+      };
     }
   }
   return { value: parts as ('idle' | 'working' | 'complete')[] };
@@ -99,7 +123,10 @@ function parseQueryExcludeStatus(param: string | undefined): { value: ('idle' | 
  * Validate the body of POST /tasks and PATCH /tasks/:id for type-correctness.
  * Returns an error string if validation fails, or undefined if valid.
  */
-function validateTaskBodyFields(body: Record<string, unknown>, isPatch: boolean): string | undefined {
+function validateTaskBodyFields(
+  body: Record<string, unknown>,
+  isPatch: boolean
+): string | undefined {
   // title: must be a string if present
   if (body.title !== undefined) {
     if (!isString(body.title)) return 'title must be a string';
@@ -124,7 +151,10 @@ function validateTaskBodyFields(body: Record<string, unknown>, isPatch: boolean)
 
   // status: must be valid if provided
   if (body.status !== undefined) {
-    if (typeof body.status !== 'string' || !VALID_STATUSES.includes(body.status as typeof VALID_STATUSES[number])) {
+    if (
+      typeof body.status !== 'string' ||
+      !VALID_STATUSES.includes(body.status as (typeof VALID_STATUSES)[number])
+    ) {
       return `Invalid status: ${body.status}. Must be one of: ${VALID_STATUSES.join(', ')}`;
     }
   }
@@ -150,7 +180,11 @@ function validateTaskBodyFields(body: Record<string, unknown>, isPatch: boolean)
   }
 
   // created_by: required for task creation (not for updates)
-  if (!isPatch && (!body.created_by || (typeof body.created_by === 'string' && body.created_by.trim().length === 0))) {
+  if (
+    !isPatch &&
+    (!body.created_by ||
+      (typeof body.created_by === 'string' && body.created_by.trim().length === 0))
+  ) {
     return 'created_by is required';
   }
 
@@ -224,7 +258,9 @@ export function createRestRouter(
         return;
       }
 
-      const excludeStatusResult = parseQueryExcludeStatus(req.query.exclude_status as string | undefined);
+      const excludeStatusResult = parseQueryExcludeStatus(
+        req.query.exclude_status as string | undefined
+      );
       if (excludeStatusResult.error) {
         res.status(400).json({ error: excludeStatusResult.error });
         return;
@@ -242,13 +278,19 @@ export function createRestRouter(
         return;
       }
 
-      const includeArchivedResult = parseQueryBool(req.query.include_archived as string | undefined, 'include_archived');
+      const includeArchivedResult = parseQueryBool(
+        req.query.include_archived as string | undefined,
+        'include_archived'
+      );
       if (includeArchivedResult.error) {
         res.status(400).json({ error: includeArchivedResult.error });
         return;
       }
 
-      const excludeSubtasksResult = parseQueryBool(req.query.exclude_subtasks as string | undefined, 'exclude_subtasks');
+      const excludeSubtasksResult = parseQueryBool(
+        req.query.exclude_subtasks as string | undefined,
+        'exclude_subtasks'
+      );
       if (excludeSubtasksResult.error) {
         res.status(400).json({ error: excludeSubtasksResult.error });
         return;
@@ -268,7 +310,10 @@ export function createRestRouter(
         }
       }
 
-      const includeDescriptionResult = parseQueryBool(req.query.include_description as string | undefined, 'include_description');
+      const includeDescriptionResult = parseQueryBool(
+        req.query.include_description as string | undefined,
+        'include_description'
+      );
       if (includeDescriptionResult.error) {
         res.status(400).json({ error: includeDescriptionResult.error });
         return;
@@ -332,7 +377,8 @@ export function createRestRouter(
   });
 
   // PATCH /api/v1/tasks/:id — update_task
-  router.patch('/tasks/:id', (req: Request, res: Response) => {    try {
+  router.patch('/tasks/:id', (req: Request, res: Response) => {
+    try {
       const id = parseInt(req.params.id, 10);
       if (isNaN(id)) {
         res.status(400).json({ error: `Invalid task ID: ${req.params.id}` });
@@ -492,9 +538,8 @@ export function createRestRouter(
         return;
       }
 
-      const newParentId = req.body.new_parent_id === null
-        ? null
-        : parseInt(req.body.new_parent_id, 10);
+      const newParentId =
+        req.body.new_parent_id === null ? null : parseInt(req.body.new_parent_id, 10);
       if (newParentId !== null && isNaN(newParentId)) {
         res.status(400).json({ error: 'Invalid new_parent_id' });
         return;
@@ -517,7 +562,10 @@ export function createRestRouter(
   // GET /api/v1/agents/:name/queue — get_my_queue
   router.get('/agents/:name/queue', (req: Request, res: Response) => {
     try {
-      const includeDescriptionResult = parseQueryBool(req.query.include_description as string | undefined, 'include_description');
+      const includeDescriptionResult = parseQueryBool(
+        req.query.include_description as string | undefined,
+        'include_description'
+      );
       if (includeDescriptionResult.error) {
         res.status(400).json({ error: includeDescriptionResult.error });
         return;
@@ -640,7 +688,9 @@ export function createRestRouter(
         return;
       }
 
-      const excludeStatusResult = parseQueryExcludeStatus(req.query.exclude_status as string | undefined);
+      const excludeStatusResult = parseQueryExcludeStatus(
+        req.query.exclude_status as string | undefined
+      );
       if (excludeStatusResult.error) {
         res.status(400).json({ error: excludeStatusResult.error });
         return;
@@ -658,13 +708,19 @@ export function createRestRouter(
         return;
       }
 
-      const includeArchivedResult = parseQueryBool(req.query.include_archived as string | undefined, 'include_archived');
+      const includeArchivedResult = parseQueryBool(
+        req.query.include_archived as string | undefined,
+        'include_archived'
+      );
       if (includeArchivedResult.error) {
         res.status(400).json({ error: includeArchivedResult.error });
         return;
       }
 
-      const excludeSubtasksResult = parseQueryBool(req.query.exclude_subtasks as string | undefined, 'exclude_subtasks');
+      const excludeSubtasksResult = parseQueryBool(
+        req.query.exclude_subtasks as string | undefined,
+        'exclude_subtasks'
+      );
       if (excludeSubtasksResult.error) {
         res.status(400).json({ error: excludeSubtasksResult.error });
         return;
@@ -742,7 +798,9 @@ export function createRestRouter(
 
       const newQueueName = req.body?.new_queue_name;
       if (typeof newQueueName !== 'string' || newQueueName.trim().length === 0) {
-        res.status(400).json({ error: 'new_queue_name is required and must be a non-empty string' });
+        res
+          .status(400)
+          .json({ error: 'new_queue_name is required and must be a non-empty string' });
         return;
       }
 
@@ -911,7 +969,11 @@ export function createRestRouter(
         return;
       }
       // Validate description if provided
-      if (req.body.description !== undefined && req.body.description !== null && !isString(req.body.description)) {
+      if (
+        req.body.description !== undefined &&
+        req.body.description !== null &&
+        !isString(req.body.description)
+      ) {
         res.status(400).json({ error: 'description must be a string' });
         return;
       }
@@ -958,7 +1020,11 @@ export function createRestRouter(
         return;
       }
       // Validate description if provided
-      if (req.body.description !== undefined && req.body.description !== null && !isString(req.body.description)) {
+      if (
+        req.body.description !== undefined &&
+        req.body.description !== null &&
+        !isString(req.body.description)
+      ) {
         res.status(400).json({ error: 'description must be a string' });
         return;
       }

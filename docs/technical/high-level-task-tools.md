@@ -46,22 +46,22 @@ Each tool call consumes tokens and requires waiting for responses. By combining 
 **Note on Priority:** Higher priority numbers are more important. A task with priority 10 will be claimed before a task with priority 5.
 
 #### Return Value
-**Success case:**
+**Success case** — the claimed task object as JSON (status set to `working`, agent assigned):
 ```json
 {
   "content": [{
     "type": "text",
-    "text": "Task #123 claimed and set to working status\n\n{task_json_with_relations}"
+    "text": "{task_json_with_relations}"
   }]
 }
 ```
 
-**No tasks available case:**
+**No tasks available case** — JSON `null` (clients must treat this as "nothing to do", not an error):
 ```json
 {
   "content": [{
     "type": "text",
-    "text": "No idle tasks available in queue for agent: {agent_name}"
+    "text": "null"
   }]
 }
 ```
@@ -292,23 +292,14 @@ export async function signupForTaskHandler(
 ) {
   try {
     const task = taskService.signupForTask(params.agent_name);
-    
-    if (!task) {
-      return {
-        content: [
-          {
-            type: 'text' as const,
-            text: `No idle tasks available in queue for agent: ${params.agent_name}`,
-          },
-        ],
-      };
-    }
 
+    // Machine-readable contract (v2.2.2+): success returns the claimed task
+    // object (status set to working); empty queue returns JSON null.
     return {
       content: [
         {
           type: 'text' as const,
-          text: `Task #${task.id} claimed and set to working status\n\n${JSON.stringify(task, null, 2)}`,
+          text: JSON.stringify(task, null, 2),
         },
       ],
     };

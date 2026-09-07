@@ -4,6 +4,8 @@
  */
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
 import { createTestClient, createTestTask, TestClient } from '../helpers/test-client.js';
+import { signupForTaskHandler } from '../../src/tools/task-tools.js';
+import type { TaskService } from '../../src/services/index.js';
 
 describe('High-Level Task Tools', () => {
   let client: TestClient;
@@ -200,6 +202,53 @@ describe('High-Level Task Tools', () => {
 
       expect(result1?.id).toBe(task1.id);
       expect(result2?.id).toBe(task2.id);
+    });
+  });
+
+  describe('signupForTaskHandler Tool Contract (#899)', () => {
+    test('should return pure JSON task object on success', async () => {
+      const task = client.taskService.createTask(
+        createTestTask({
+          assigned_to: 'agent-contract',
+          status: 'idle',
+        })
+      );
+
+      const result = (await signupForTaskHandler(client.taskService, {
+        agent_name: 'agent-contract',
+      })) as { isError?: boolean; content: Array<{ text: string }> };
+
+      expect(result.isError).toBeUndefined();
+      // Contract: content is valid JSON that parses to the claimed task object
+      const parsed = JSON.parse(result.content[0].text) as Record<string, unknown>;
+      expect(parsed['id']).toBe(task.id);
+      expect(parsed['status']).toBe('working');
+      expect(parsed['assigned_to']).toBe('agent-contract');
+    });
+
+    test('should return JSON null when no idle tasks available', async () => {
+      const result = (await signupForTaskHandler(client.taskService, {
+        agent_name: 'agent-nothing-to-do',
+      })) as { isError?: boolean; content: Array<{ text: string }> };
+
+      expect(result.isError).toBeUndefined();
+      // Contract: bare "nothing to do" is JSON null, never plain text
+      expect(JSON.parse(result.content[0].text)).toBeNull();
+    });
+
+    test('should return isError result when service throws', async () => {
+      const throwingService = {
+        signupForTask: () => {
+          throw new Error('boom');
+        },
+      } as unknown as TaskService;
+
+      const result = (await signupForTaskHandler(throwingService, {
+        agent_name: 'agent-contract',
+      })) as { isError?: boolean; content: Array<{ text: string }> };
+
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Error signing up for task: boom');
     });
   });
 

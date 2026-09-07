@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import chalk from 'chalk';
 import * as readline from 'readline';
 import { ensureConnected } from '../../client/connection.js';
+import { exitWithError, gracefulShutdown } from '../../utils/errors.js';
 import { loadConfig } from '../../config/loader.js';
 
 async function promptConfirmation(message: string): Promise<boolean> {
@@ -24,7 +25,10 @@ async function promptConfirmation(message: string): Promise<boolean> {
  * Throws on invalid (non-numeric or empty) entries.
  */
 function parseIds(idInput: string): number[] {
-  const parts = idInput.split(',').map((s) => s.trim()).filter((s) => s.length > 0);
+  const parts = idInput
+    .split(',')
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
   if (parts.length === 0) {
     throw new Error('No task IDs provided.');
   }
@@ -76,9 +80,7 @@ export function createTaskDeleteCommand(program: Command): void {
         // Prompt for confirmation if not --yes and not in JSON mode
         if (!options.yes && !jsonMode) {
           const idList = taskIds.join(', ');
-          console.log(
-            chalk.yellow(`⚠️  Warning: This will permanently delete task(s): ${idList}`)
-          );
+          console.log(chalk.yellow(`⚠️  Warning: This will permanently delete task(s): ${idList}`));
           const confirmed = await promptConfirmation(chalk.cyan('Are you sure? (y/N): '));
 
           if (!confirmed) {
@@ -124,32 +126,24 @@ export function createTaskDeleteCommand(program: Command): void {
             if (result.success) {
               console.log(chalk.green(`✓ Task #${result.id} deleted`));
             } else {
-              console.error(
-                chalk.red(`✗ Failed to delete task #${result.id}: ${result.error}`)
-              );
+              console.error(chalk.red(`✗ Failed to delete task #${result.id}: ${result.error}`));
             }
           }
 
           // Summary
           if (taskIds.length > 1) {
             console.log(
-              chalk.gray(
-                `\n${succeeded} succeeded, ${failed} failed, ${taskIds.length} total`
-              )
+              chalk.gray(`\n${succeeded} succeeded, ${failed} failed, ${taskIds.length} total`)
             );
           }
         }
 
         // Exit with error code if any failed
         if (failed > 0) {
-          process.exit(1);
+          await gracefulShutdown(1);
         }
       } catch (error) {
-        console.error(
-          chalk.red('Error deleting task(s):'),
-          error instanceof Error ? error.message : String(error)
-        );
-        process.exit(1);
+        await exitWithError('Error deleting task(s):', error);
       }
     });
 }

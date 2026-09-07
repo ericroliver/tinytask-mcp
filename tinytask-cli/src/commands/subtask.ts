@@ -71,9 +71,7 @@ export function createSubtaskCommands(program: Command): void {
 
         const createdBy = options.createdBy || config.agent;
         if (!createdBy) {
-          console.error(
-            chalk.red('Error: Agent identity is required. Use --created-by <agent>')
-          );
+          console.error(chalk.red('Error: Agent identity is required. Use --created-by <agent>'));
           console.error(chalk.gray('Or set the TKO_AGENT environment variable'));
           process.exit(1);
         }

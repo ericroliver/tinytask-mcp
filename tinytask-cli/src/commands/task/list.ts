@@ -56,11 +56,17 @@ export function createTaskListCommand(program: Command): void {
         const filters: TaskFilters = {};
         if (options.assignedTo) filters.assigned_to = options.assignedTo;
         if (options.status) {
-          const statuses = options.status.split(',').map((s: string) => s.trim()).filter(Boolean);
+          const statuses = options.status
+            .split(',')
+            .map((s: string) => s.trim())
+            .filter(Boolean);
           filters.status = statuses.length === 1 ? statuses[0] : statuses;
         }
         if (options.excludeStatus) {
-          filters.exclude_status = options.excludeStatus.split(',').map((s: string) => s.trim()).filter(Boolean);
+          filters.exclude_status = options.excludeStatus
+            .split(',')
+            .map((s: string) => s.trim())
+            .filter(Boolean);
         }
         if (options.queue) filters.queue_name = options.queue;
         if (options.parent !== undefined) filters.parent_task_id = options.parent;

@@ -155,10 +155,7 @@ export async function getTaskWithSubtasksHandler(
   }
 ) {
   try {
-    const task = taskService.getTaskWithSubtasks(
-      params.task_id,
-      params.recursive || false
-    );
+    const task = taskService.getTaskWithSubtasks(params.task_id, params.recursive || false);
 
     if (!task) {
       return {
@@ -203,12 +200,13 @@ export async function moveSubtaskHandler(
   try {
     // new_parent_id can be undefined (to make top-level) or a number
     const newParentId = params.new_parent_id === undefined ? null : params.new_parent_id;
-    
+
     const task = taskService.moveSubtask(params.subtask_id, newParentId);
 
-    const message = newParentId === null
-      ? `Task #${params.subtask_id} moved to top-level (no parent)`
-      : `Task #${params.subtask_id} moved to parent #${newParentId}`;
+    const message =
+      newParentId === null
+        ? `Task #${params.subtask_id} moved to top-level (no parent)`
+        : `Task #${params.subtask_id} moved to parent #${newParentId}`;
 
     return {
       content: [
@@ -469,23 +467,16 @@ export async function signupForTaskHandler(
 ) {
   try {
     const task = taskService.signupForTask(params.agent_name);
-    
-    if (!task) {
-      return {
-        content: [
-          {
-            type: 'text' as const,
-            text: `No idle tasks available in queue for agent: ${params.agent_name}`,
-          },
-        ],
-      };
-    }
 
+    // Machine-readable contract (v2.2.2+): success returns the claimed task
+    // object (status set to working); empty queue returns JSON null.
+    // Versions before 2.2.2 returned human-readable text here, which broke
+    // JSON-expecting clients such as the CLI (see task #899).
     return {
       content: [
         {
           type: 'text' as const,
-          text: `Task #${task.id} claimed and set to working status\n\n${JSON.stringify(task, null, 2)}`,
+          text: JSON.stringify(task, null, 2),
         },
       ],
     };

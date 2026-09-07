@@ -19,7 +19,7 @@ export class TableFormatter implements Formatter {
 
     for (const word of words) {
       const testLine = currentLine ? `${currentLine} ${word}` : word;
-      
+
       if (testLine.length <= maxWidth) {
         currentLine = testLine;
       } else {
@@ -43,7 +43,16 @@ export class TableFormatter implements Formatter {
     }
 
     const table = new Table({
-      head: this.formatHeader(['ID', 'Title', 'Status', 'Assigned', 'Queue', 'Parent', 'Priority', 'Blocked By']),
+      head: this.formatHeader([
+        'ID',
+        'Title',
+        'Status',
+        'Assigned',
+        'Queue',
+        'Parent',
+        'Priority',
+        'Blocked By',
+      ]),
       style: {
         head: [],
         border: this.options.color ? ['gray'] : [],
@@ -85,7 +94,10 @@ export class TableFormatter implements Formatter {
         this.formatQueueName(t.queue_name as string | null),
         this.formatParent(t.parent_task_id as number | null),
         this.formatPriority(t.priority as number),
-        this.formatBlockedBy(t.blocked_by_task_id as number | null, t.is_currently_blocked as boolean),
+        this.formatBlockedBy(
+          t.blocked_by_task_id as number | null,
+          t.is_currently_blocked as boolean
+        ),
       ]);
 
       // Add subtasks if any
@@ -103,7 +115,10 @@ export class TableFormatter implements Formatter {
             this.formatQueueName(st.queue_name as string | null),
             this.formatParent(st.parent_task_id as number | null),
             this.formatPriority(st.priority as number),
-            this.formatBlockedBy(st.blocked_by_task_id as number | null, st.is_currently_blocked as boolean),
+            this.formatBlockedBy(
+              st.blocked_by_task_id as number | null,
+              st.is_currently_blocked as boolean
+            ),
           ]);
         });
       }
@@ -159,7 +174,11 @@ export class TableFormatter implements Formatter {
 
     if (Array.isArray(task.comments) && task.comments.length > 0) {
       lines.push('');
-      lines.push(this.options.color ? chalk.gray('─────────────────────────────────────────') : '─────────────────────────────────────────');
+      lines.push(
+        this.options.color
+          ? chalk.gray('─────────────────────────────────────────')
+          : '─────────────────────────────────────────'
+      );
       lines.push(this.options.color ? chalk.cyan.bold('Comments:') : 'Comments:');
       task.comments.forEach((comment: unknown, index: number) => {
         const c = comment as Record<string, unknown>;
@@ -448,7 +467,11 @@ export class TableFormatter implements Formatter {
       lines.push(`${this.options.color ? chalk.gray('Updated:') : 'Updated:'}    ${updatedAt}`);
     }
     lines.push('');
-    lines.push(this.options.color ? chalk.gray('─────────────────────────────────────────') : '─────────────────────────────────────────');
+    lines.push(
+      this.options.color
+        ? chalk.gray('─────────────────────────────────────────')
+        : '─────────────────────────────────────────'
+    );
     lines.push('');
     lines.push(content);
 

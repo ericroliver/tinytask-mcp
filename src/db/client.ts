@@ -34,7 +34,7 @@ export class DatabaseClient {
 
     // Set busy timeout to 30 seconds to prevent premature timeouts
     this.db.pragma('busy_timeout = 30000');
-    
+
     // Set WAL autocheckpoint to prevent WAL from growing too large
     this.db.pragma('wal_autocheckpoint = 1000');
   }
@@ -43,9 +43,9 @@ export class DatabaseClient {
    * Check if a column exists in a table
    */
   private columnExists(tableName: string, columnName: string): boolean {
-    const result = this.db
-      .prepare(`PRAGMA table_info(${tableName})`)
-      .all() as Array<{ name: string }>;
+    const result = this.db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{
+      name: string;
+    }>;
     return result.some((col) => col.name === columnName);
   }
 
@@ -106,10 +106,10 @@ export class DatabaseClient {
     if (!this.columnExists('tasks', 'blocked_by_task_id')) {
       // Disable foreign keys temporarily
       this.db.exec('PRAGMA foreign_keys = OFF;');
-      
+
       // Begin transaction for table rebuild
       this.db.exec('BEGIN TRANSACTION;');
-      
+
       try {
         // Create new table with the blocked_by_task_id column and constraint
         this.db.exec(`
@@ -133,7 +133,7 @@ export class DatabaseClient {
             FOREIGN KEY (blocked_by_task_id) REFERENCES tasks(id) ON DELETE SET NULL
           );
         `);
-        
+
         // Copy data from old table to new table
         this.db.exec(`
           INSERT INTO tasks_new (
@@ -147,24 +147,34 @@ export class DatabaseClient {
             created_at, updated_at, archived_at
           FROM tasks;
         `);
-        
+
         // Drop old table
         this.db.exec('DROP TABLE tasks;');
-        
+
         // Rename new table to tasks
         this.db.exec('ALTER TABLE tasks_new RENAME TO tasks;');
-        
+
         // Recreate all indexes
         this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_assigned_to ON tasks(assigned_to);');
         this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);');
-        this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_assigned_status ON tasks(assigned_to, status);');
+        this.db.exec(
+          'CREATE INDEX IF NOT EXISTS idx_tasks_assigned_status ON tasks(assigned_to, status);'
+        );
         this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_archived ON tasks(archived_at);');
-        this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_parent_task_id ON tasks(parent_task_id);');
+        this.db.exec(
+          'CREATE INDEX IF NOT EXISTS idx_tasks_parent_task_id ON tasks(parent_task_id);'
+        );
         this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_queue_name ON tasks(queue_name);');
-        this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_queue_status ON tasks(queue_name, status);');
-        this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_queue_assigned ON tasks(queue_name, assigned_to);');
-        this.db.exec('CREATE INDEX IF NOT EXISTS idx_tasks_blocked_by ON tasks(blocked_by_task_id);');
-        
+        this.db.exec(
+          'CREATE INDEX IF NOT EXISTS idx_tasks_queue_status ON tasks(queue_name, status);'
+        );
+        this.db.exec(
+          'CREATE INDEX IF NOT EXISTS idx_tasks_queue_assigned ON tasks(queue_name, assigned_to);'
+        );
+        this.db.exec(
+          'CREATE INDEX IF NOT EXISTS idx_tasks_blocked_by ON tasks(blocked_by_task_id);'
+        );
+
         // Commit transaction
         this.db.exec('COMMIT;');
       } catch (error) {

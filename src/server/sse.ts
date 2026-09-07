@@ -90,13 +90,13 @@ export async function startSseServer(
 
     const transport = new SSEServerTransport('/mcp', res);
     const sessionId = transport.sessionId;
-    
+
     // Create a NEW MCP Server instance for this session
     const sessionServer = createMcpServer(taskService, commentService, linkService, queueService);
-    
+
     // Store session with its own server instance
     sessions.set(sessionId, { transport, server: sessionServer });
-    
+
     logger.info('✅ SSE SESSION ESTABLISHED', {
       sessionId,
       clientIp: req.ip,
@@ -104,13 +104,13 @@ export async function startSseServer(
       allActiveSessions: Array.from(sessions.keys()),
       timestamp: new Date().toISOString(),
     });
-    
+
     // Instrument the response object to track SSE writes
     const originalWrite = res.write.bind(res);
     const originalEnd = res.end.bind(res);
     const responseSessionId = sessionId; // Capture the session ID for this specific response
-    
-    res.write = function(chunk: unknown, ...args: unknown[]): boolean {
+
+    res.write = function (chunk: unknown, ...args: unknown[]): boolean {
       logger.info('📡 SSE EVENT WRITE', {
         sessionId: responseSessionId,
         transportSessionId: transport.sessionId,
@@ -123,8 +123,8 @@ export async function startSseServer(
       });
       return (originalWrite as (...args: unknown[]) => boolean)(chunk, ...args);
     };
-    
-    res.end = function(chunk?: unknown, ...args: unknown[]): typeof res {
+
+    res.end = function (chunk?: unknown, ...args: unknown[]): typeof res {
       logger.info('📡 SSE CONNECTION END', {
         sessionId,
         hadChunk: !!chunk,
@@ -132,7 +132,7 @@ export async function startSseServer(
       });
       return (originalEnd as (...args: unknown[]) => typeof res)(chunk, ...args);
     };
-    
+
     // Monitor response state periodically
     const monitorInterval = setInterval(() => {
       if (!res.writable) {
@@ -144,7 +144,7 @@ export async function startSseServer(
         clearInterval(monitorInterval);
       }
     }, 5000);
-    
+
     // Connect the session's server instance to its transport
     logger.info('🔗 CONNECTING SESSION SERVER TO TRANSPORT', {
       sessionId,
@@ -164,7 +164,7 @@ export async function startSseServer(
         timestamp: new Date().toISOString(),
       });
       clearInterval(monitorInterval);
-      
+
       // Clean up the session
       const session = sessions.get(sessionId);
       if (session) {
@@ -173,7 +173,7 @@ export async function startSseServer(
         });
       }
       sessions.delete(sessionId);
-      
+
       logger.info('🗑️ SESSION REMOVED', {
         sessionId,
         remainingSessions: sessions.size,
@@ -189,21 +189,21 @@ export async function startSseServer(
     // This prevents Node.js from timing out long-running MCP operations
     req.setTimeout(0);
     res.setTimeout(0);
-    
+
     const requestId = uuidv4();
     const startTime = Date.now();
-    
+
     // The session ID should be in the request (check query params, headers, or body)
     // MCP SDK typically uses query parameters
     const sessionId = (req.query.sessionId as string) || (req.headers['x-session-id'] as string);
-    
+
     logger.info(`MCP POST message received - Session: ${sessionId} - RequestID: ${requestId}`, {
       requestId,
       requestedSessionId: sessionId,
       availableSessionIds: Array.from(sessions.keys()),
       sessionCount: sessions.size,
     });
-    
+
     if (!sessionId) {
       logger.warn('No session ID in POST request', {
         requestId,
@@ -213,9 +213,9 @@ export async function startSseServer(
       res.status(400).json({ error: 'Missing session ID' });
       return;
     }
-    
+
     const session = sessions.get(sessionId);
-    
+
     if (!session) {
       logger.error(`❌ NO SESSION FOUND`, {
         requestId,
@@ -226,20 +226,20 @@ export async function startSseServer(
       res.status(404).json({ error: 'Session not found' });
       return;
     }
-    
+
     const transport = session.transport;
-    
+
     logger.info(`✅ FOUND SESSION - Using transport`, {
       requestId,
       requestedSessionId: sessionId,
       transportSessionId: transport.sessionId,
       sessionMatch: sessionId === transport.sessionId,
     });
-    
+
     // Capture request body to log the actual MCP protocol message
     const chunks: Buffer[] = [];
     const originalOn = req.on.bind(req);
-    
+
     // Intercept data events to capture body for logging
     req.on = function (event: string, listener: (...args: unknown[]) => void) {
       if (event === 'data') {
@@ -250,12 +250,12 @@ export async function startSseServer(
       }
       return originalOn(event, listener);
     } as typeof req.on;
-    
+
     // Capture response to log what's sent back
     const responseChunks: Buffer[] = [];
     const originalWrite = res.write.bind(res);
     const originalEnd = res.end.bind(res);
-    
+
     res.write = function (chunk: unknown, ...args: unknown[]): boolean {
       if (chunk) {
         responseChunks.push(Buffer.from(chunk as string));
@@ -263,7 +263,7 @@ export async function startSseServer(
       // Call original with proper type handling
       return (originalWrite as (...args: unknown[]) => boolean)(chunk, ...args);
     };
-    
+
     res.end = function (chunk?: unknown, ...args: unknown[]): typeof res {
       if (chunk) {
         responseChunks.push(Buffer.from(chunk as string));
@@ -271,16 +271,16 @@ export async function startSseServer(
       // Call original with proper type handling
       return (originalEnd as (...args: unknown[]) => typeof res)(chunk, ...args);
     };
-    
+
     // Log body when request completes
     req.once('end', () => {
       try {
         const body = Buffer.concat(chunks).toString('utf8');
         const mcpRequest = JSON.parse(body);
-        
+
         // Extract meaningful details from the MCP request
         const requestDetails = extractMcpRequestDetails(mcpRequest);
-        
+
         logger.info('📨 MCP REQUEST DETAILS', {
           requestId,
           sessionId,
@@ -290,13 +290,12 @@ export async function startSseServer(
           params: requestDetails.params, // Log actual parameters
           timestamp: new Date().toISOString(),
         });
-        
+
         // Log full request at debug level
         logger.debug('Full MCP request', {
           requestId,
           mcpRequest,
         });
-        
       } catch (e) {
         logger.warn('Could not parse MCP request body for logging', {
           requestId,
@@ -304,7 +303,7 @@ export async function startSseServer(
         });
       }
     });
-    
+
     try {
       logger.info('🔄 CALLING transport.handlePostMessage', {
         requestId,
@@ -312,12 +311,12 @@ export async function startSseServer(
         transportExists: !!transport,
         timestamp: new Date().toISOString(),
       });
-      
+
       // Handle the incoming message through the transport
       await transport.handlePostMessage(req, res);
-      
+
       const duration = Date.now() - startTime;
-      
+
       logger.info('✅ transport.handlePostMessage COMPLETED', {
         requestId,
         sessionId,
@@ -326,7 +325,7 @@ export async function startSseServer(
         responseStatusCode: res.statusCode,
         timestamp: new Date().toISOString(),
       });
-      
+
       // Log response content
       try {
         const responseBody = Buffer.concat(responseChunks).toString('utf8');
@@ -369,7 +368,7 @@ export async function startSseServer(
           error: e instanceof Error ? e.message : String(e),
         });
       }
-      
+
       // Verify response was actually sent
       if (!res.headersSent) {
         logger.error('⚠️ RESPONSE HEADERS NOT SENT!', {
@@ -378,7 +377,7 @@ export async function startSseServer(
           duration: `${duration}ms`,
         });
       }
-      
+
       // Now check if the SSE transport is supposed to send the actual result
       // The 202 Accepted is just acknowledgment - the real result should go over SSE
       logger.info('⏳ Waiting for tool result to be sent over SSE stream...', {
@@ -387,7 +386,6 @@ export async function startSseServer(
         sseTransportActive: sessions.has(sessionId),
         timestamp: new Date().toISOString(),
       });
-      
     } catch (error) {
       const duration = Date.now() - startTime;
       logger.error('❌ MCP REQUEST FAILED', {
@@ -398,7 +396,7 @@ export async function startSseServer(
         stack: error instanceof Error ? error.stack : undefined,
         timestamp: new Date().toISOString(),
       });
-      
+
       if (!res.headersSent) {
         res.status(500).json({ error: 'Failed to process message' });
       }
@@ -438,7 +436,7 @@ export async function startSseServer(
   httpServer.timeout = 0; // Disable request timeout (default: 120000ms)
   httpServer.keepAliveTimeout = 0; // Disable keep-alive timeout (default: 5000ms)
   httpServer.headersTimeout = 0; // Disable headers timeout (default: 60000ms)
-  
+
   logger.info('HTTP timeouts disabled for SSE long-lived connections');
 
   // Graceful shutdown
@@ -446,7 +444,7 @@ export async function startSseServer(
     logger.info('Shutting down...');
     httpServer.close(async () => {
       logger.info('Server closed');
-      
+
       // Close all session servers
       for (const [sessionId, session] of sessions.entries()) {
         logger.info(`Closing session: ${sessionId}`);
@@ -455,7 +453,7 @@ export async function startSseServer(
         });
       }
       sessions.clear();
-      
+
       process.exit(0);
     });
 
@@ -468,7 +466,7 @@ export async function startSseServer(
 
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
-  
+
   return httpServer;
 }
 
@@ -484,12 +482,12 @@ function extractMcpRequestDetails(mcpRequest: unknown): {
   if (!mcpRequest || typeof mcpRequest !== 'object') {
     return { method: 'unknown' };
   }
-  
+
   const req = mcpRequest as Record<string, unknown>;
-  
+
   // Extract the method
   const method = typeof req.method === 'string' ? req.method : 'unknown';
-  
+
   // Check if it's a tool call
   if (method === 'tools/call' && req.params && typeof req.params === 'object') {
     const params = req.params as Record<string, unknown>;
@@ -499,7 +497,7 @@ function extractMcpRequestDetails(mcpRequest: unknown): {
       params: params.arguments, // Return actual parameters
     };
   }
-  
+
   // Check if it's a resource read
   if (method === 'resources/read' && req.params && typeof req.params === 'object') {
     const params = req.params as Record<string, unknown>;
@@ -509,7 +507,7 @@ function extractMcpRequestDetails(mcpRequest: unknown): {
       params: req.params, // Return full params for resources
     };
   }
-  
+
   // For other methods, return the params
   return {
     method,

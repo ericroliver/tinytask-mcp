@@ -18,11 +18,7 @@ import {
   TaskHistory,
 } from '../types/index.js';
 import { toISO8601 } from '../utils/timestamp.js';
-import {
-  recordTaskHistory,
-  getTaskHistory,
-  HistoryChange,
-} from './task-history.js';
+import { recordTaskHistory, getTaskHistory, HistoryChange } from './task-history.js';
 import { EventBus } from '../events/event-bus.js';
 import { TaskEventType, createEvent, extractTaskContext } from '../events/event-types.js';
 import type { TaskContext } from '../events/event-types.js';
@@ -361,7 +357,11 @@ export class TaskService {
         diffField('priority', existing.priority, updates.priority);
       }
       if (updates.tags !== undefined) {
-        diffField('tags', existing.tags ? JSON.stringify(existing.tags) : null, updates.tags ? JSON.stringify(updates.tags) : null);
+        diffField(
+          'tags',
+          existing.tags ? JSON.stringify(existing.tags) : null,
+          updates.tags ? JSON.stringify(updates.tags) : null
+        );
       }
       if (updates.parent_task_id !== undefined) {
         diffField('parent_task_id', existing.parent_task_id, updates.parent_task_id);
@@ -417,7 +417,13 @@ export class TaskService {
         }
       }
 
-      this.emit(TaskEventType.TaskUpdated, { taskId: id, before, after: updated, changedFields, ...extractTaskContext(updated) });
+      this.emit(TaskEventType.TaskUpdated, {
+        taskId: id,
+        before,
+        after: updated,
+        changedFields,
+        ...extractTaskContext(updated),
+      });
 
       // Conditional events
       if (updates.status !== undefined && updates.status !== before.status) {
@@ -480,7 +486,10 @@ export class TaskService {
       }
     });
 
-    this.emit(TaskEventType.TaskDeleted, { taskId: id, ...(taskContext ?? { assignee: null, owner: null, status: 'idle' as TaskStatus, cue: null }) });
+    this.emit(TaskEventType.TaskDeleted, {
+      taskId: id,
+      ...(taskContext ?? { assignee: null, owner: null, status: 'idle' as TaskStatus, cue: null }),
+    });
   }
 
   /**
@@ -611,7 +620,11 @@ export class TaskService {
       return archivedTask;
     });
 
-    this.emit(TaskEventType.TaskArchived, { taskId: id, task: archived, ...extractTaskContext(archived) });
+    this.emit(TaskEventType.TaskArchived, {
+      taskId: id,
+      task: archived,
+      ...extractTaskContext(archived),
+    });
     return archived;
   }
 
@@ -844,7 +857,12 @@ export class TaskService {
       parent_task_id: parentTaskId,
     });
 
-    this.emit(TaskEventType.SubtaskCreated, { taskId: task.id, parentId: parentTaskId, task, ...extractTaskContext(task) });
+    this.emit(TaskEventType.SubtaskCreated, {
+      taskId: task.id,
+      parentId: parentTaskId,
+      task,
+      ...extractTaskContext(task),
+    });
     return task;
   }
 

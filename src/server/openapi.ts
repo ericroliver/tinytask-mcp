@@ -233,15 +233,61 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'listTasks',
         tags: ['Tasks'],
         parameters: [
-          { name: 'assigned_to', in: 'query', schema: { type: 'string' }, description: 'Filter by assignee' },
-          { name: 'status', in: 'query', schema: { type: 'string', enum: ['idle', 'working', 'complete'] }, description: 'Filter by status' },
-          { name: 'include_archived', in: 'query', schema: { type: 'boolean' }, description: 'Include archived tasks' },
-          { name: 'include_description', in: 'query', schema: { type: 'boolean' }, description: 'Include full task descriptions (default: false - omitted to keep responses small)' },
-          { name: 'limit', in: 'query', schema: { type: 'number' }, description: 'Max results (default: 100)' },
-          { name: 'offset', in: 'query', schema: { type: 'number' }, description: 'Pagination offset' },
-          { name: 'queue_name', in: 'query', schema: { type: 'string' }, description: 'Filter by queue name' },
-          { name: 'parent_task_id', in: 'query', schema: { type: 'number' }, description: 'Filter by parent task ID' },
-          { name: 'exclude_subtasks', in: 'query', schema: { type: 'boolean' }, description: 'Exclude subtasks from results' },
+          {
+            name: 'assigned_to',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by assignee',
+          },
+          {
+            name: 'status',
+            in: 'query',
+            schema: { type: 'string', enum: ['idle', 'working', 'complete'] },
+            description: 'Filter by status',
+          },
+          {
+            name: 'include_archived',
+            in: 'query',
+            schema: { type: 'boolean' },
+            description: 'Include archived tasks',
+          },
+          {
+            name: 'include_description',
+            in: 'query',
+            schema: { type: 'boolean' },
+            description:
+              'Include full task descriptions (default: false - omitted to keep responses small)',
+          },
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'number' },
+            description: 'Max results (default: 100)',
+          },
+          {
+            name: 'offset',
+            in: 'query',
+            schema: { type: 'number' },
+            description: 'Pagination offset',
+          },
+          {
+            name: 'queue_name',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by queue name',
+          },
+          {
+            name: 'parent_task_id',
+            in: 'query',
+            schema: { type: 'number' },
+            description: 'Filter by parent task ID',
+          },
+          {
+            name: 'exclude_subtasks',
+            in: 'query',
+            schema: { type: 'boolean' },
+            description: 'Exclude subtasks from results',
+          },
         ],
         responses: {
           '200': jsonResponse('TaskList'),
@@ -257,7 +303,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'getTask',
         tags: ['Tasks'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Task ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Task ID',
+          },
         ],
         responses: {
           '200': jsonResponse('TaskWithRelations'),
@@ -270,7 +322,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'updateTask',
         tags: ['Tasks'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Task ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Task ID',
+          },
         ],
         requestBody: requestBody(
           z.object({
@@ -299,7 +357,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'deleteTask',
         tags: ['Tasks'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Task ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Task ID',
+          },
         ],
         responses: {
           '200': jsonResponse('DeletedResponse'),
@@ -317,7 +381,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'getTaskHistory',
         tags: ['Tasks'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Task ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Task ID',
+          },
         ],
         responses: {
           '200': jsonResponse('TaskHistoryList'),
@@ -334,7 +404,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'archiveTask',
         tags: ['Tasks'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Task ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Task ID',
+          },
         ],
         responses: {
           '200': jsonResponse('ParsedTask'),
@@ -353,7 +429,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'createSubtask',
         tags: ['Subtasks'],
         parameters: [
-          { name: 'parentId', in: 'path', required: true, schema: { type: 'number' }, description: 'Parent task ID' },
+          {
+            name: 'parentId',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Parent task ID',
+          },
         ],
         requestBody: requestBody(
           z.object({
@@ -378,9 +460,25 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'getSubtasks',
         tags: ['Subtasks'],
         parameters: [
-          { name: 'parentId', in: 'path', required: true, schema: { type: 'number' }, description: 'Parent task ID' },
-          { name: 'recursive', in: 'query', schema: { type: 'boolean' }, description: 'Include nested subtasks' },
-          { name: 'include_archived', in: 'query', schema: { type: 'boolean' }, description: 'Include archived subtasks' },
+          {
+            name: 'parentId',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Parent task ID',
+          },
+          {
+            name: 'recursive',
+            in: 'query',
+            schema: { type: 'boolean' },
+            description: 'Include nested subtasks',
+          },
+          {
+            name: 'include_archived',
+            in: 'query',
+            schema: { type: 'boolean' },
+            description: 'Include archived subtasks',
+          },
         ],
         responses: {
           '200': jsonResponse('TaskList'),
@@ -392,12 +490,24 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
     '/api/v1/tasks/{id}/hierarchy': {
       get: {
         summary: 'Get task with subtasks',
-        description: 'Get a task with all its subtasks in a tree structure. Maps to MCP tool: get_task_with_subtasks.',
+        description:
+          'Get a task with all its subtasks in a tree structure. Maps to MCP tool: get_task_with_subtasks.',
         operationId: 'getTaskHierarchy',
         tags: ['Subtasks'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Task ID' },
-          { name: 'recursive', in: 'query', schema: { type: 'boolean' }, description: 'Include nested subtasks (default: true)' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Task ID',
+          },
+          {
+            name: 'recursive',
+            in: 'query',
+            schema: { type: 'boolean' },
+            description: 'Include nested subtasks (default: true)',
+          },
         ],
         responses: {
           '200': jsonResponse('TaskWithSubtasks'),
@@ -409,15 +519,26 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
     '/api/v1/tasks/{id}/parent': {
       patch: {
         summary: 'Move subtask',
-        description: 'Move a subtask to a different parent or make it a top-level task. Maps to MCP tool: move_subtask.',
+        description:
+          'Move a subtask to a different parent or make it a top-level task. Maps to MCP tool: move_subtask.',
         operationId: 'moveSubtask',
         tags: ['Subtasks'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Subtask ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Subtask ID',
+          },
         ],
         requestBody: requestBody(
           z.object({
-            new_parent_id: z.number().nullable().optional().describe('New parent task ID (null to make top-level)'),
+            new_parent_id: z
+              .number()
+              .nullable()
+              .optional()
+              .describe('New parent task ID (null to make top-level)'),
           })
         ),
         responses: {
@@ -433,12 +554,25 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
     '/api/v1/agents/{name}/queue': {
       get: {
         summary: 'Get agent queue',
-        description: 'Get all open tasks assigned to a specific agent. Maps to MCP tool: get_my_queue.',
+        description:
+          'Get all open tasks assigned to a specific agent. Maps to MCP tool: get_my_queue.',
         operationId: 'getAgentQueue',
         tags: ['Agents'],
         parameters: [
-          { name: 'name', in: 'path', required: true, schema: { type: 'string' }, description: 'Agent name' },
-          { name: 'include_description', in: 'query', schema: { type: 'boolean' }, description: 'Include full task descriptions (default: false - omitted to keep responses small)' },
+          {
+            name: 'name',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Agent name',
+          },
+          {
+            name: 'include_description',
+            in: 'query',
+            schema: { type: 'boolean' },
+            description:
+              'Include full task descriptions (default: false - omitted to keep responses small)',
+          },
         ],
         responses: {
           '200': jsonResponse('TaskList'),
@@ -450,11 +584,18 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
     '/api/v1/agents/{name}/signup': {
       post: {
         summary: 'Signup for a task',
-        description: 'Claim the highest priority idle task from the agent queue and mark it as working. Maps to MCP tool: signup_for_task.',
+        description:
+          'Claim the highest priority idle task from the agent queue and mark it as working. Maps to MCP tool: signup_for_task.',
         operationId: 'signupForTask',
         tags: ['Agents'],
         parameters: [
-          { name: 'name', in: 'path', required: true, schema: { type: 'string' }, description: 'Agent name' },
+          {
+            name: 'name',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Agent name',
+          },
         ],
         requestBody: {
           description: 'Optional — no body fields required',
@@ -472,11 +613,18 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
     '/api/v1/tasks/{id}/transfer': {
       post: {
         summary: 'Transfer task between agents',
-        description: 'Transfer a task to another agent with status reset to idle and add handoff comment. Maps to MCP tool: move_task.',
+        description:
+          'Transfer a task to another agent with status reset to idle and add handoff comment. Maps to MCP tool: move_task.',
         operationId: 'transferTask',
         tags: ['Agents'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Task ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Task ID',
+          },
         ],
         requestBody: requestBody(
           z.object({
@@ -515,7 +663,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'getQueueStats',
         tags: ['Queues'],
         parameters: [
-          { name: 'name', in: 'path', required: true, schema: { type: 'string' }, description: 'Queue name' },
+          {
+            name: 'name',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Queue name',
+          },
         ],
         responses: {
           '200': jsonResponse('QueueStats'),
@@ -531,7 +685,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'addTaskToQueue',
         tags: ['Queues'],
         parameters: [
-          { name: 'name', in: 'path', required: true, schema: { type: 'string' }, description: 'Queue name' },
+          {
+            name: 'name',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Queue name',
+          },
         ],
         requestBody: requestBody(
           z.object({
@@ -546,18 +706,55 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
       },
       get: {
         summary: 'Get queue tasks',
-        description: 'Get all tasks in a queue with optional filters. Maps to MCP tool: get_queue_tasks.',
+        description:
+          'Get all tasks in a queue with optional filters. Maps to MCP tool: get_queue_tasks.',
         operationId: 'getQueueTasks',
         tags: ['Queues'],
         parameters: [
-          { name: 'name', in: 'path', required: true, schema: { type: 'string' }, description: 'Queue name' },
-          { name: 'assigned_to', in: 'query', schema: { type: 'string' }, description: 'Filter by assignee' },
-          { name: 'status', in: 'query', schema: { type: 'string', enum: ['idle', 'working', 'complete'] }, description: 'Filter by status' },
-          { name: 'parent_task_id', in: 'query', schema: { type: 'number' }, description: 'Filter by parent task ID' },
-          { name: 'exclude_subtasks', in: 'query', schema: { type: 'boolean' }, description: 'Exclude subtasks' },
-          { name: 'include_archived', in: 'query', schema: { type: 'boolean' }, description: 'Include archived tasks' },
+          {
+            name: 'name',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Queue name',
+          },
+          {
+            name: 'assigned_to',
+            in: 'query',
+            schema: { type: 'string' },
+            description: 'Filter by assignee',
+          },
+          {
+            name: 'status',
+            in: 'query',
+            schema: { type: 'string', enum: ['idle', 'working', 'complete'] },
+            description: 'Filter by status',
+          },
+          {
+            name: 'parent_task_id',
+            in: 'query',
+            schema: { type: 'number' },
+            description: 'Filter by parent task ID',
+          },
+          {
+            name: 'exclude_subtasks',
+            in: 'query',
+            schema: { type: 'boolean' },
+            description: 'Exclude subtasks',
+          },
+          {
+            name: 'include_archived',
+            in: 'query',
+            schema: { type: 'boolean' },
+            description: 'Include archived tasks',
+          },
           { name: 'limit', in: 'query', schema: { type: 'number' }, description: 'Max results' },
-          { name: 'offset', in: 'query', schema: { type: 'number' }, description: 'Pagination offset' },
+          {
+            name: 'offset',
+            in: 'query',
+            schema: { type: 'number' },
+            description: 'Pagination offset',
+          },
         ],
         responses: {
           '200': jsonResponse('TaskList'),
@@ -570,7 +767,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'clearQueue',
         tags: ['Queues'],
         parameters: [
-          { name: 'name', in: 'path', required: true, schema: { type: 'string' }, description: 'Queue name' },
+          {
+            name: 'name',
+            in: 'path',
+            required: true,
+            schema: { type: 'string' },
+            description: 'Queue name',
+          },
         ],
         responses: {
           '200': jsonResponse('ClearedQueueResponse'),
@@ -586,7 +789,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'removeTaskFromQueue',
         tags: ['Queues'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Task ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Task ID',
+          },
         ],
         responses: {
           '200': jsonResponse('ParsedTask'),
@@ -600,7 +809,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'moveTaskToQueue',
         tags: ['Queues'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Task ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Task ID',
+          },
         ],
         requestBody: requestBody(
           z.object({
@@ -624,7 +839,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'addComment',
         tags: ['Comments'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Task ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Task ID',
+          },
         ],
         requestBody: requestBody(
           z.object({
@@ -644,7 +865,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'listComments',
         tags: ['Comments'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Task ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Task ID',
+          },
         ],
         responses: {
           '200': jsonResponse('CommentList'),
@@ -660,7 +887,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'updateComment',
         tags: ['Comments'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Comment ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Comment ID',
+          },
         ],
         requestBody: requestBody(
           z.object({
@@ -679,7 +912,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'deleteComment',
         tags: ['Comments'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Comment ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Comment ID',
+          },
         ],
         responses: {
           '200': jsonResponse('DeletedResponse'),
@@ -698,7 +937,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'addLink',
         tags: ['Links'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Task ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Task ID',
+          },
         ],
         requestBody: requestBody(
           z.object({
@@ -719,7 +964,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'listLinks',
         tags: ['Links'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Task ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Task ID',
+          },
         ],
         responses: {
           '200': jsonResponse('LinkList'),
@@ -735,7 +986,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'updateLink',
         tags: ['Links'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Link ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Link ID',
+          },
         ],
         requestBody: requestBody(
           z.object({
@@ -755,7 +1012,13 @@ function buildPaths(): Record<string, Record<string, JsonSchema>> {
         operationId: 'deleteLink',
         tags: ['Links'],
         parameters: [
-          { name: 'id', in: 'path', required: true, schema: { type: 'number' }, description: 'Link ID' },
+          {
+            name: 'id',
+            in: 'path',
+            required: true,
+            schema: { type: 'number' },
+            description: 'Link ID',
+          },
         ],
         responses: {
           '200': jsonResponse('DeletedResponse'),

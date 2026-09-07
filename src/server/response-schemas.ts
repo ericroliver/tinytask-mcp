@@ -25,7 +25,9 @@ export const ParsedTaskSchema = z.object({
   queue_name: z.string().nullable().describe('Queue name the task belongs to'),
   blocked_by_task_id: z.number().nullable().describe('ID of task blocking this one'),
   is_currently_blocked: z.boolean().describe('Whether the task is currently blocked'),
-  auto_promote: z.boolean().describe("Whether the task's status auto-updates from its children (default: true)"),
+  auto_promote: z
+    .boolean()
+    .describe("Whether the task's status auto-updates from its children (default: true)"),
   created_at: z.string().describe('ISO timestamp of creation'),
   updated_at: z.string().describe('ISO timestamp of last update'),
   completed_at: z.string().nullable().describe('ISO timestamp of completion, null if not complete'),
@@ -100,7 +102,10 @@ export const TaskHistoryEntrySchema = z.object({
   field_name: z.string().describe('Field that changed'),
   old_value: z.string().nullable().describe('Previous value, null if unset'),
   new_value: z.string().nullable().describe('New value, null if unset'),
-  changed_by: z.string().nullable().describe('Agent that made the change, null if unknown or system-internal without actor'),
+  changed_by: z
+    .string()
+    .nullable()
+    .describe('Agent that made the change, null if unknown or system-internal without actor'),
   changed_at: z.string().describe('ISO timestamp of the change'),
 });
 
@@ -117,10 +122,12 @@ export const ClearedQueueResponseSchema = z.object({
   tasks_removed: z.number().describe('Number of tasks removed from the queue'),
 });
 
-export const TaskTransferResponseSchema = z.object({
-  task: ParsedTaskSchema.describe('The transferred task with updated assignment'),
-  comment: CommentDataSchema.describe('The handoff comment created during transfer'),
-}).describe('Response shape for task transfer: includes the updated task and the handoff comment');
+export const TaskTransferResponseSchema = z
+  .object({
+    task: ParsedTaskSchema.describe('The transferred task with updated assignment'),
+    comment: CommentDataSchema.describe('The handoff comment created during transfer'),
+  })
+  .describe('Response shape for task transfer: includes the updated task and the handoff comment');
 
 export const ErrorResponseSchema = z.object({
   error: z.string().describe('Error message'),

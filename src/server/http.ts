@@ -41,6 +41,12 @@ export async function startHttpServer(
     return startSseServer(taskService, commentService, linkService, queueService, options);
   } else {
     logger.info('✨ Using Streamable HTTP transport');
-    return startStreamableHttpServer(taskService, commentService, linkService, queueService, options);
+    return startStreamableHttpServer(
+      taskService,
+      commentService,
+      linkService,
+      queueService,
+      options
+    );
   }
 }

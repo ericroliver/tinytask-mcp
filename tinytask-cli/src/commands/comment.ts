@@ -64,11 +64,7 @@ export function createCommentCommands(program: Command): void {
         const createdBy = options.createdBy || config.agent;
 
         const client = await ensureConnected(config.url);
-        const result = await client.addComment(
-          parseInt(taskId),
-          resolvedContent,
-          createdBy
-        );
+        const result = await client.addComment(parseInt(taskId), resolvedContent, createdBy);
 
         if (command.optsWithGlobals().json) {
           const formatter = createFormatter('json', { color: false, verbose: false });
@@ -184,9 +180,7 @@ export function createCommentCommands(program: Command): void {
           console.log(formatter.format(result));
         } else {
           const newComment = result as Record<string, unknown>;
-          console.log(
-            chalk.green(`✓ Comment #${commentId} moved to task #${toTaskId}`)
-          );
+          console.log(chalk.green(`✓ Comment #${commentId} moved to task #${toTaskId}`));
           console.log(chalk.gray(`  New comment ID: ${newComment.id}`));
         }
       } catch (error) {

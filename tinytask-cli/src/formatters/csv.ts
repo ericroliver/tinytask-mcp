@@ -91,10 +91,10 @@ export class CSVFormatter implements Formatter {
     // Prevent CSV injection by prefixing formula characters with single quote
     // This forces spreadsheet applications to treat the value as literal text
     const formulaChars = ['=', '+', '-', '@'];
-    if (formulaChars.some(char => value.startsWith(char))) {
+    if (formulaChars.some((char) => value.startsWith(char))) {
       value = `'${value}`;
     }
-    
+
     if (value.includes(',') || value.includes('"') || value.includes('\n')) {
       return `"${value.replace(/"/g, '""')}"`;
     }

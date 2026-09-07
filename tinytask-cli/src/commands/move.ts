@@ -46,9 +46,7 @@ export function createMoveCommand(program: Command): void {
 
         const fromAgent = options.from || config.agent;
         if (!fromAgent) {
-          console.error(
-            chalk.red('Error: No current agent specified and no agent configured')
-          );
+          console.error(chalk.red('Error: No current agent specified and no agent configured'));
           console.error(chalk.gray('Use: tinytask move <id> <to-agent> --from <current-agent>'));
           console.error(chalk.gray('Or set the TKO_AGENT environment variable'));
           process.exit(1);

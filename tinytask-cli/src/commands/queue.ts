@@ -161,12 +161,21 @@ export function createQueueCommands(program: Command): void {
         const filters = {
           queue_name: queueName,
           status: options.status
-            ? (options.status.split(',').map((s: string) => s.trim()).filter(Boolean).length === 1
-                ? options.status.split(',')[0].trim()
-                : options.status.split(',').map((s: string) => s.trim()).filter(Boolean))
+            ? options.status
+                .split(',')
+                .map((s: string) => s.trim())
+                .filter(Boolean).length === 1
+              ? options.status.split(',')[0].trim()
+              : options.status
+                  .split(',')
+                  .map((s: string) => s.trim())
+                  .filter(Boolean)
             : undefined,
           exclude_status: options.excludeStatus
-            ? options.excludeStatus.split(',').map((s: string) => s.trim()).filter(Boolean)
+            ? options.excludeStatus
+                .split(',')
+                .map((s: string) => s.trim())
+                .filter(Boolean)
             : undefined,
           assigned_to: options.assignedTo,
           exclude_subtasks: options.excludeSubtasks,

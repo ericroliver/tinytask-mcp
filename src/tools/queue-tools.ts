@@ -125,10 +125,7 @@ export async function moveTaskToQueueHandler(
   params: { task_id: number; new_queue_name: string }
 ) {
   try {
-    const task = queueService.moveTaskToQueue(
-      params.task_id,
-      params.new_queue_name
-    );
+    const task = queueService.moveTaskToQueue(params.task_id, params.new_queue_name);
 
     return {
       content: [

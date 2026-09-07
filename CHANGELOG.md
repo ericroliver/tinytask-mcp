@@ -5,6 +5,26 @@ All notable changes to TinyTask MCP will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.2] - 2026-09-07
+
+### Fixed
+- **`signup_for_task` MCP tool now returns machine-readable JSON** (defect #899):
+  success returns the claimed task object (status `working`, agent assigned);
+  an empty queue returns JSON `null`. Previously both paths returned
+  human-readable text ("No idle tasks available in queue for agent: X" /
+  "Task #N claimed and set to working status\n\n{json}"), which broke
+  JSON-expecting clients — the tinytask CLI aborted with a parse error on
+  every signup, taking agent tool calls down with a libuv abort on Windows
+  (exit -1073740791). Tool description now documents the contract;
+  technical/final-spec docs updated; handler-level contract tests added.
+- **CLI 0.6.0 companion release** (defects #898, #900): tolerant signup
+  parsing (older server text shapes still understood), actionable
+  "Unknown tool" guidance when calling `get_task_history` against stale
+  servers (< 2.2.0), regression tests for `task delete --yes` /
+  `queue clear --yes`, and graceful shutdown (disconnect before exit plus
+  global unhandledRejection/uncaughtException handlers) so CLI errors exit
+  cleanly instead of hard-aborting on Windows SEA builds.
+
 ## [2.2.1] - 2026-09-05
 
 ### Changed

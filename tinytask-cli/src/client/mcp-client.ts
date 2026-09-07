@@ -147,6 +147,67 @@ export class TinyTaskClient {
     }
   }
 
+  /**
+   * Signup uses a tolerant parser because the signup_for_task response shape
+   * has varied across server versions (task #899):
+   *  - server >= 2.2.2: pure JSON — the claimed task object, or JSON null
+   *    when the agent's queue has no idle tasks
+   *  - server <  2.2.2: human-readable text ("No idle tasks available..." or
+   *    "Task #N claimed and set to working status\n\n{json}")
+   * A bare "nothing to do" answer must never fail the tool call.
+   */
+  private parseSignupResult(result: CallToolResult): unknown {
+    if (result.isError) {
+      const errorText = result.content[0]?.text || 'Unknown error';
+      throw new Error(errorText);
+    }
+
+    const text = result.content[0]?.text ?? '';
+    try {
+      const parsed: unknown = JSON.parse(text);
+      if (parsed === null) {
+        return null;
+      }
+      // Defensive unwrap of a { task, message } envelope if a server uses one
+      if (typeof parsed === 'object' && 'task' in parsed && 'message' in parsed) {
+        return (parsed as { task: unknown }).task;
+      }
+      return parsed;
+    } catch {
+      // Older servers (< 2.2.2) return human-readable text
+      if (/no idle tasks/i.test(text)) {
+        return null;
+      }
+      // Legacy success responses wrap the task JSON in a narrative sentence
+      const start = text.indexOf('{');
+      const end = text.lastIndexOf('}');
+      if (start !== -1 && end > start) {
+        try {
+          return JSON.parse(text.slice(start, end + 1));
+        } catch {
+          // fall through to the error below
+        }
+      }
+      throw new Error(`Failed to parse server response: ${text.slice(0, 80)}`);
+    }
+  }
+
+  /**
+   * Translate tool-level "Unknown tool" errors from older servers into
+   * actionable guidance instead of a raw protocol error (task #898).
+   */
+  private rethrowWithGuidance(error: unknown, tool: string, minServerVersion: string): never {
+    const message = error instanceof Error ? error.message : String(error);
+    if (/unknown tool/i.test(message)) {
+      throw new Error(
+        `The connected TinyTask server does not support the '${tool}' tool ` +
+          `(requires tinytask-mcp >= ${minServerVersion}). ` +
+          'Rebuild/redeploy the tinytask-mcp server image (docker-compose build && docker-compose up -d), then retry.'
+      );
+    }
+    throw error instanceof Error ? error : new Error(message);
+  }
+
   // Task Operations
   async createTask(params: CreateTaskParams): Promise<unknown> {
     this.ensureConnected();
@@ -217,7 +278,7 @@ export class TinyTaskClient {
       name: 'signup_for_task',
       arguments: { agent_name: agentName },
     });
-    return this.parseResult(result);
+    return this.parseSignupResult(result);
   }
 
   async moveTask(
@@ -264,11 +325,15 @@ export class TinyTaskClient {
 
   async getTaskHistory(taskId: number): Promise<unknown> {
     this.ensureConnected();
-    const result = await this.client.callTool({
-      name: 'get_task_history',
-      arguments: { task_id: taskId },
-    });
-    return this.parseResult(result);
+    try {
+      const result = await this.client.callTool({
+        name: 'get_task_history',
+        arguments: { task_id: taskId },
+      });
+      return this.parseResult(result);
+    } catch (error) {
+      this.rethrowWithGuidance(error, 'get_task_history', '2.2.0');
+    }
   }
 
   async updateComment(id: number, content: string): Promise<unknown> {

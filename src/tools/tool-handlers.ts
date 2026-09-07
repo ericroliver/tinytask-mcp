@@ -168,7 +168,10 @@ export function registerToolHandlers(
           result = await getSubtasksHandler(taskService, validatedArgs as GetSubtasksParams);
           break;
         case 'get_task_with_subtasks':
-          result = await getTaskWithSubtasksHandler(taskService, validatedArgs as GetTaskWithSubtasksParams);
+          result = await getTaskWithSubtasksHandler(
+            taskService,
+            validatedArgs as GetTaskWithSubtasksParams
+          );
           break;
         case 'move_subtask':
           result = await moveSubtaskHandler(taskService, validatedArgs as MoveSubtaskParams);
@@ -219,10 +222,16 @@ export function registerToolHandlers(
           result = await addTaskToQueueHandler(queueService, validatedArgs as AddTaskToQueueParams);
           break;
         case 'remove_task_from_queue':
-          result = await removeTaskFromQueueHandler(queueService, validatedArgs as RemoveTaskFromQueueParams);
+          result = await removeTaskFromQueueHandler(
+            queueService,
+            validatedArgs as RemoveTaskFromQueueParams
+          );
           break;
         case 'move_task_to_queue':
-          result = await moveTaskToQueueHandler(queueService, validatedArgs as MoveTaskToQueueParams);
+          result = await moveTaskToQueueHandler(
+            queueService,
+            validatedArgs as MoveTaskToQueueParams
+          );
           break;
         case 'get_queue_tasks':
           result = await getQueueTasksHandler(queueService, validatedArgs as GetQueueTasksParams);
@@ -257,14 +266,14 @@ export function registerToolHandlers(
     } catch (error) {
       const duration = Date.now() - startTime;
       const errorMessage = error instanceof Error ? error.message : String(error);
-      
+
       logger.error(`Tool execution failed: ${name}`, {
         error: errorMessage,
         stack: error instanceof Error ? error.stack : undefined,
         args,
         duration: `${duration}ms`,
       });
-      
+
       return {
         content: [
           {

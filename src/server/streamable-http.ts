@@ -99,7 +99,7 @@ export async function startStreamableHttpServer(
     const sessionServer = createMcpServer(taskService, commentService, linkService, queueService);
 
     const sessionId = transport.sessionId || 'unknown';
-    
+
     logger.info('✨ CREATING NEW SESSION', {
       sessionId,
       timestamp: new Date().toISOString(),
@@ -141,7 +141,7 @@ export async function startStreamableHttpServer(
       });
     } catch (error) {
       const duration = Date.now() - startTime;
-      
+
       logger.error('❌ REQUEST FAILED', {
         sessionId,
         duration: `${duration}ms`,
@@ -218,6 +218,6 @@ export async function startStreamableHttpServer(
 
   process.on('SIGINT', shutdown);
   process.on('SIGTERM', shutdown);
-  
+
   return httpServer;
 }
